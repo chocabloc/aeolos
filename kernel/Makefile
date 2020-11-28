@@ -19,16 +19,20 @@ kernel: kernel.elf
 symbols: kernel.sym
 
 kernel.sym: kernel.elf
-	./extractsymbols kernel.elf
+	@./extractsymbols kernel.elf
 	
 kernel.elf: $(COBJS) $(ASMOBJS)
-	$(LD) -o kernel.elf $^ $(LINKFLAGS)
+	@echo Linking all objects...
+	@$(LD) -o kernel.elf $^ $(LINKFLAGS)
 	
 $(COBJS): %.o: %.c
-	$(CC) -o $@ -c $< $(CFLAGS)
+	@echo Compiling $< ...
+	@$(CC) -o $@ -c $< $(CFLAGS)
 
 $(ASMOBJS): %.o: %.s
-	$(AS) -o $@ -c $< $(ASFLAGS)
+	@echo Compiling $< ...
+	@$(AS) -o $@ -c $< $(ASFLAGS)
 
 clean: 
-	rm $(COBJS) $(ASMOBJS)
+	@echo Cleaning...
+	@rm -f $(COBJS) $(ASMOBJS)

@@ -1,4 +1,4 @@
-# aeol-os
+# aeolos
 A little x86_64 hobby OS
 
 ### Things complete:

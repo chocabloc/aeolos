@@ -8,13 +8,16 @@ KERNEL = $(KERNELDIR)/kernel.elf
 .PHONY: run $(KERNEL) clean
 	
 $(IMAGEFILE): $(KERNEL)
-	cp $(KERNEL) $(IMAGEDIR)/kernel.elf && ./genimg
+	@echo Generating Hard Disk Image...
+	@cp $(KERNEL) $(IMAGEDIR)/kernel.elf && ./genimg
 	
 $(KERNEL): 
-	$(MAKE) -C $(KERNELDIR)
+	@echo Building kernel...
+	@$(MAKE) -C $(KERNELDIR)
 	
 run: $(IMAGEFILE)
-	qemu-system-x86_64 $(IMAGEFILE) -bios /usr/share/ovmf/OVMF.fd -m 1024 -enable-kvm
+	@echo Testing image in QEMU...
+	@qemu-system-x86_64 $(IMAGEFILE) -bios /usr/share/ovmf/OVMF.fd -m 1024 -enable-kvm -no-reboot -no-shutdown
 	
 clean:
-	$(MAKE) -C $(KERNELDIR) clean
+	@$(MAKE) -C $(KERNELDIR) clean

@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # create and format the image file, if it doesn't exist
-dd of=os.img if=/dev/zero bs=1M count=33
+if ! test -f "os.img"; then
+	dd of=os.img if=/dev/zero bs=1M count=33 status=none
+fi
 
 # format the image as FAT32 with size 33MB
 mformat -F -h 64 -s 32 -t 33 -c 1 -i os.img ::
