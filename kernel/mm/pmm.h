@@ -16,3 +16,4 @@ bool pmm_alloc_page(uint64_t);
 
 uint64_t pmm_get_total_mem();
 uint64_t pmm_get_free_mem();
+uint64_t pmm_get_bm_end();

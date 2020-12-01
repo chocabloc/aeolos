@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "drivers/fbcon/fbcon.h"
+#include "dev/term/term.h"
 #include "stivale2.h"
 
 extern void kmain(stivale2_struct* bootinfo);

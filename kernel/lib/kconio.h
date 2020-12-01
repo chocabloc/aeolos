@@ -6,3 +6,4 @@ int kputchar(int);
 
 int kdbg_ok(const char* s, ...);
 int kdbg_info(const char* s, ...);
+int kdbg_err(const char* s, ...);

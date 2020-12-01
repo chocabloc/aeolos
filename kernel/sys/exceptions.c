@@ -1,4 +1,4 @@
-#include "drivers/fbcon/fbcon.h"
+#include "kconio.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -27,13 +27,7 @@ static char* exceptions[] = {
 
 void exc_handler(uint64_t errcode, uint64_t excno)
 {
-    fbcon_setfgcolor(0x00ff6666);
-    fbcon_puts("\nFatal exception occured: ");
-    fbcon_setfgcolor(FBCON_COLOR_GRAY);
-    fbcon_puts(exceptions[excno]);
-    fbcon_puts(", Error Code: ");
-    fbcon_puthex(errcode);
-    fbcon_puts(". Halting...");
+    kdbg_err("Fatal Exception Occured: %s. Error Code: %d. Halting...\n", exceptions[excno], errcode);
 
     while (true)
         ;

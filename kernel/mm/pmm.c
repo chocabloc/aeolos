@@ -151,3 +151,6 @@ bool pmm_alloc_page(uint64_t page)
 
 uint64_t pmm_get_total_mem() { return total_mem; }
 uint64_t pmm_get_free_mem() { return free_mem; }
+
+// Returns the end of the bitmap. Used by the VMM during initialization.
+uint64_t pmm_get_bm_end() { return (uint64_t)bitmap + bm_size; }
