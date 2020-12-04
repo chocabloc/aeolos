@@ -126,8 +126,9 @@ struct stivale2_struct_tag_modules {
     struct stivale2_module modules[];
 } __attribute__((packed));
 
-#define STIVALE2_STRUCT_TAG_RSDP_ID 0x9e1786930a375e78
+#define STV2_STRUCT_TAG_RSDP_ID 0x9e1786930a375e78
 
+typedef struct stivale2_struct_tag_rsdp stv2_struct_tag_rsdp;
 struct stivale2_struct_tag_rsdp {
     struct stivale2_tag tag;
     uint64_t rsdp;
@@ -165,3 +166,5 @@ struct stivale2_struct_tag_smp {
     uint64_t cpu_count;
     struct stivale2_smp_info smp_info[];
 } __attribute__((packed));
+
+void* stv2_find_struct_tag(stivale2_struct* s, uint64_t id);

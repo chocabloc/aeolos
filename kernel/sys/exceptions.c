@@ -1,4 +1,4 @@
-#include "kconio.h"
+#include "sys/panic.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -27,8 +27,6 @@ static char* exceptions[] = {
 
 void exc_handler(uint64_t errcode, uint64_t excno)
 {
-    kdbg_err("Fatal Exception Occured: %s. Error Code: %d. Halting...\n", exceptions[excno], errcode);
-
     while (true)
         ;
 }

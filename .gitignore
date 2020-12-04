@@ -1,5 +1,6 @@
 *.img
 *.o
 *.elf
+*.vdi
 .vscode/*
 .vscode

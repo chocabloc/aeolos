@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "dev/term/term.h"
+#include "mm/vmm.h"
 #include "stivale2.h"
 
 extern void kmain(stivale2_struct* bootinfo);
@@ -24,3 +25,14 @@ __attribute__((section(".stivale2hdr"), used)) static stv2_hdr header = {
     .flags = 0,
     .tags = (uint64_t)&header_fb_tag
 };
+
+// find tag with a specific ID in a stivale2 structure
+void* stv2_find_struct_tag(stivale2_struct* s, uint64_t id)
+{
+    for (stv2_tag* t = (stv2_tag*)PHYS_TO_VIRT(s->tags); t; t = (stv2_tag*)PHYS_TO_VIRT(t->next)) {
+        if (t->identifier == id)
+            return t;
+    }
+
+    return NULL;
+}

@@ -2,11 +2,11 @@ CC=clang
 LD=clang
 AS=clang
 
-CFLAGS =-ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wall -Wextra -I . -I lib -Os
+CFLAGS =-ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wall -Wextra -I . -I lib -O0
 ASFLAGS = -I .
-LINKFLAGS = -Wl,-Tlinker.ld -nostdlib -Os
+LINKFLAGS = -Wl,-Tlinker.ld -nostdlib
 
-CFILES = $(wildcard *.c boot/*.c dev/term/*.c dev/fb/*.c sys/*.c mm/*.c lib/*.c)
+CFILES = $(wildcard *.c boot/*.c dev/term/*.c dev/fb/*.c sys/*.c sys/acpi/*.c mm/*.c lib/*.c)
 ASMFILES = $(wildcard *.s boot/*.s dev/term/*.s sys/*.s)
 
 COBJS = $(patsubst %.c, %.o, $(CFILES))

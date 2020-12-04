@@ -1,6 +1,5 @@
 #include "kconio.h"
 #include "dev/term/term.h"
-#include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -60,7 +59,7 @@ int kputchar(int i)
 
 int kdbg_ok(const char* s, ...)
 {
-    term_setfgcolor(0x66ff66);
+    term_setfgcolor(TERM_COLOR_LTGREEN);
     term_puts("[OKAY] ");
     term_setfgcolor(TERM_COLOR_GRAY);
 
@@ -73,7 +72,7 @@ int kdbg_ok(const char* s, ...)
 
 int kdbg_info(const char* s, ...)
 {
-    term_setfgcolor(0x6666ff);
+    term_setfgcolor(TERM_COLOR_LTBLUE);
     term_puts("[INFO] ");
     term_setfgcolor(TERM_COLOR_GRAY);
 
@@ -86,8 +85,21 @@ int kdbg_info(const char* s, ...)
 
 int kdbg_err(const char* s, ...)
 {
-    term_setfgcolor(0xff6666);
+    term_setfgcolor(TERM_COLOR_LTRED);
     term_puts("[ERROR] ");
+    term_setfgcolor(TERM_COLOR_GRAY);
+
+    va_list args;
+    va_start(args, s);
+    int returnval = kvprintf(s, args);
+    va_end(args);
+    return returnval;
+}
+
+int kdbg_warn(const char* s, ...)
+{
+    term_setfgcolor(TERM_COLOR_ORANGE);
+    term_puts("[WARNING] ");
     term_setfgcolor(TERM_COLOR_GRAY);
 
     va_list args;

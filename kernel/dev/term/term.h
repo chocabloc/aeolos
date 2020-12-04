@@ -3,15 +3,19 @@
 #include "boot/stivale2.h"
 #include <stdint.h>
 
-#define TERM_COLOR_BLACK 0x00000000
-#define TERM_COLOR_WHITE 0x00FFFFFF
-#define TERM_COLOR_GRAY 0x00888888
-#define TERM_COLOR_RED 0x00FF0000
-#define TERM_COLOR_GREEN 0x0000FF00
-#define TERM_COLOR_BLUE 0x000000FF
-#define TERM_COLOR_CYAN 0x0000FFFF
-#define TERM_COLOR_MAGENTA 0x00FF00FF
-#define TERM_COLOR_YELLOW 0x00FFFF00
+#define TERM_COLOR_BLACK 0x000000
+#define TERM_COLOR_WHITE 0xffffff
+#define TERM_COLOR_GRAY 0x808080
+#define TERM_COLOR_RED 0xff0000
+#define TERM_COLOR_GREEN 0x00ff00
+#define TERM_COLOR_BLUE 0x0000ff
+#define TERM_COLOR_CYAN 0x00ffff
+#define TERM_COLOR_MAGENTA 0xff00ff
+#define TERM_COLOR_YELLOW 0xffff00
+#define TERM_COLOR_LTRED 0xff6666
+#define TERM_COLOR_LTGREEN 0x66ff66
+#define TERM_COLOR_LTBLUE 0x6666ff
+#define TERM_COLOR_ORANGE 0xffaa66
 
 typedef struct PSF_font {
     uint32_t magic; /* magic bytes to identify PSF */

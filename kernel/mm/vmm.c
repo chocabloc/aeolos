@@ -1,6 +1,4 @@
-/* The Virtual Memory Manager
- *   (some rough edges)
- */
+// The Virtual Memory Manager (some rough edges)
 
 #include "vmm.h"
 #include "dev/fb/fb.h"
@@ -35,7 +33,7 @@ static void _vmm_map_rec(uint64_t* table, uint64_t virtaddr, uint64_t physaddr, 
 
     uint64_t* newtable;
     if (!(table[index] & FLAG_PRESENT)) {
-        newtable = (uint64_t*)PHYS_TO_VIRT(pmm_get_page());
+        newtable = (uint64_t*)PHYS_TO_VIRT(pmm_get(1));
 
         for (int i = 0; i < 512; i++)
             newtable[i] = 0;
@@ -47,39 +45,35 @@ static void _vmm_map_rec(uint64_t* table, uint64_t virtaddr, uint64_t physaddr, 
     _vmm_map_rec(newtable, virtaddr, physaddr, plevel - 1);
 }
 
-/*
- * map virtual memory to physical
- * just a wrapper around _vmm_map_rec
- */
+// maps virtual memory to physical (wrapper around _vmm_map_rec)
 void vmm_map(uint64_t virtaddr, uint64_t physaddr, uint64_t numpages)
 {
     for (uint64_t i = 0; i < numpages * PAGE_SIZE; i += PAGE_SIZE)
         _vmm_map_rec(PML4, virtaddr + i, physaddr + i, 3);
 }
 
-/*
- * Create own paging structures, as the ones provided by the bootloader cannot be relied on
- * Map the kernel, the PMM data structures, and the framebuffer
- */
+// Create own paging structures, as the ones provided by the bootloader cannot be relied on
 void vmm_init()
 {
-    kdbg_info("Mapping kernel...\n");
-    vmm_map(HIGHERHALF_OFFSET, 0, (VIRT_TO_PHYS(pmm_get_bm_end()) / PAGE_SIZE) + 1);
+    kdbg_info("Mapping lower 2GB of memory to 0xFFFFFFFF80000000...\n");
+    vmm_map(HIGHERHALF_OFFSET, 0, NUM_PAGES(0x80000000));
 
-    kdbg_info("Remapping framebuffer...\n");
+    kdbg_info("Mapping all memory to 0xFFFF800000000000...\n");
+    vmm_map(MEM_VIRT_OFFSET, 0, NUM_PAGES(pmm_get_mem_info()->phys_limit));
+
     const fb_info* oldfb = fb_getinfo();
-
-    // put the new framebuffer just after the pmm data structures, page aligned
-    uint64_t newfbaddr = ((pmm_get_bm_end() + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
-    uint64_t fbsize = (oldfb->pitch * oldfb->height) / PAGE_SIZE;
-
+    // map a bit more than height so that scrolling works properly
+    uint64_t fbsize = NUM_PAGES(oldfb->pitch * (oldfb->height + 16));
+    uint64_t newfbaddr = PHYS_TO_VIRT((uint64_t)oldfb->addr);
+    // the old fb address is a physical memory pointer, thus no need to convert
     vmm_map(newfbaddr, (uint64_t)oldfb->addr, fbsize);
+    kdbg_info("Remapping framebuffer to %x...\n", newfbaddr);
     fb_remap(newfbaddr);
 
     // update cr3
     asm("movq %0, %%rax; movq %%rax, %%cr3;"
         :
-        : "g"(VIRT_TO_PHYS((uint64_t)&PML4))
+        : "g"((uint64_t)&PML4 - HIGHERHALF_OFFSET)
         : "rax");
 
     kdbg_info("Updated CR3\n");

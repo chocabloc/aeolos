@@ -2,7 +2,7 @@
 
 reload_sr:
     // update other segment registers
-    mov $0x10, %ax
+    movw $0x10, %ax
     movw %ax, %ds
     movw %ax, %es
     movw %ax, %ss
