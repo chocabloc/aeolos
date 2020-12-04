@@ -3,7 +3,7 @@ A little x86_64 hobby OS
 
 ### Things complete:
 * A framebuffer console
-* A PMM
+* Initial ACPI support
 
 ### Things not yet complete:
 * Everything else
