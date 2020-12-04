@@ -38,7 +38,7 @@ static bool bmp_isfree(uint64_t addr, uint64_t numpages)
 
     bool free = true;
     for (uint64_t i = addr; i < end; i += PAGE_SIZE) {
-        free = bitmap[addr / (PAGE_SIZE * BMP_PAGES_PER_BYTE)] & (1 << ((addr / PAGE_SIZE) % 8));
+        free = bitmap[i / (PAGE_SIZE * BMP_PAGES_PER_BYTE)] & (1 << ((i / PAGE_SIZE) % 8));
         if (!free)
             break;
     }

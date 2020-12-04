@@ -32,8 +32,6 @@ void kmain(stivale2_struct* bootinfo)
     pmm_init((stv2_struct_tag_mmap*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_MMAP_ID));
     kdbg_ok("PMM initialized\n");
 
-    kdbg_info("%x %x\n", (uint64_t)fb_getinfo()->addr, fb_getinfo()->pitch * fb_getinfo()->height);
-
     vmm_init();
     kdbg_ok("VMM initialized\n");
 
