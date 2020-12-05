@@ -37,6 +37,11 @@ void kmain(stivale2_struct* bootinfo)
 
     acpi_init((stv2_struct_tag_rsdp*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_RSDP_ID));
 
+    // since we do not need the bootloader info anymore
+    pmm_reclaim_bootloader_mem();
+
+    pmm_vibe_check();
+
     kdbg_info("Testing interrupts...\n");
     // testing interrupts by doing a page fault
     uint64_t a = 0x400000000000;

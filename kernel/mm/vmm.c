@@ -61,14 +61,11 @@ void vmm_init()
     kdbg_info("Mapping all memory to 0xFFFF800000000000...\n");
     vmm_map(MEM_VIRT_OFFSET, 0, NUM_PAGES(pmm_get_mem_info()->phys_limit));
 
-    const fb_info* oldfb = fb_getinfo();
+    // mapping the framebuffer
     // map a bit more than height so that scrolling works properly
-    uint64_t fbsize = NUM_PAGES(oldfb->pitch * (oldfb->height + 16));
-    uint64_t newfbaddr = PHYS_TO_VIRT((uint64_t)oldfb->addr);
-    // the old fb address is a physical memory pointer, thus no need to convert
-    vmm_map(newfbaddr, (uint64_t)oldfb->addr, fbsize);
-    kdbg_info("Remapping framebuffer to %x...\n", newfbaddr);
-    fb_remap(newfbaddr);
+    const fb_info* fb = fb_getinfo();
+    uint64_t fbsize = NUM_PAGES(fb->pitch * (fb->height + 16));
+    vmm_map((uint64_t)fb->addr, VIRT_TO_PHYS(fb->addr), fbsize);
 
     // update cr3
     asm("movq %0, %%rax; movq %%rax, %%cr3;"

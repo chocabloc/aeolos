@@ -16,4 +16,10 @@ void acpi_init(stv2_struct_tag_rsdp* rsdp_info)
         kputchar(rsdp->OEMID[i]);
 
     kprintf("\". Revision: %d\n", rsdp->revision);
+
+    if (rsdp->revision == 2) {
+        kdbg_info("ACPI v2.0 found. XSDT: %x\n", rsdp->xsdt_addr);
+    } else {
+        kdbg_info("ACPI v1.0 found. RSDT: %x\n", rsdp->rsdt_addr);
+    }
 }
