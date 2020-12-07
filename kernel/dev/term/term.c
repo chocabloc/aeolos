@@ -1,7 +1,8 @@
 #include "term.h"
 #include "boot/stivale2.h"
 #include "dev/fb/fb.h"
-#include "stddef.h"
+#include "memutils.h"
+#include <stddef.h>
 
 extern PSF_font term_font;
 
@@ -19,9 +20,13 @@ static uint32_t term_width, term_height;
 // scroll the screen one line up
 static void scroll()
 {
-    for (size_t y = 0; y < fb->height; y++)
+    for (size_t y = 0; y < fb->height - term_font.height; y++)
         for (size_t x = 0; x < fb->width; x++)
             fb_putpixel(x, y, fb_getpixel(x, y + term_font.height));
+
+    for (size_t y = fb->height - term_font.height; y < fb->height; y++)
+        for (size_t x = 0; x < fb->width; x++)
+            fb_putpixel(x, y, bgcolor);
 }
 
 // put character at specified x and y position, measured in characters

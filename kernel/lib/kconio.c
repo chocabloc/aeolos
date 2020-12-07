@@ -1,8 +1,6 @@
 #include "kconio.h"
 #include "dev/term/term.h"
 #include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
 
 int kvprintf(const char* s, va_list args)
 {
@@ -33,7 +31,7 @@ int kvprintf(const char* s, va_list args)
             term_putchar(s[i]);
         }
     }
-    return EXIT_SUCCESS;
+    return 0;
 }
 
 int kprintf(const char* s, ...)
@@ -48,13 +46,20 @@ int kprintf(const char* s, ...)
 int kputs(const char* s)
 {
     term_puts(s);
-    return EXIT_SUCCESS;
+    return 0;
+}
+
+int kputsn(const char* s, uint64_t len)
+{
+    for (uint64_t i = 0; i < len; i++)
+        term_putchar(s[i]);
+    return 0;
 }
 
 int kputchar(int i)
 {
     term_putchar((uint8_t)i);
-    return EXIT_SUCCESS;
+    return 0;
 }
 
 int kdbg_ok(const char* s, ...)

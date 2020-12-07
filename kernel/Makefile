@@ -6,7 +6,7 @@ CFLAGS =-ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -mno-sse2
 ASFLAGS = -I . -flto
 LINKFLAGS = -Wl,-Tlinker.ld -nostdlib -Ofast -flto
 
-CFILES = $(wildcard *.c boot/*.c dev/term/*.c dev/fb/*.c sys/*.c sys/acpi/*.c mm/*.c lib/*.c)
+CFILES = $(wildcard *.c boot/*.c dev/term/*.c dev/fb/*.c sys/*.c acpi/*.c mm/*.c lib/*.c)
 ASMFILES = $(wildcard *.s boot/*.s dev/term/*.s sys/*.s)
 
 COBJS = $(patsubst %.c, %.o, $(CFILES))

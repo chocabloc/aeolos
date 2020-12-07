@@ -4,6 +4,7 @@
 #include "dev/fb/fb.h"
 #include "dev/term/term.h"
 #include "kconio.h"
+#include "memutils.h"
 #include "mm/pmm.h"
 
 extern void kernel_start;
@@ -34,9 +35,7 @@ static void _vmm_map_rec(uint64_t* table, uint64_t virtaddr, uint64_t physaddr, 
     uint64_t* newtable;
     if (!(table[index] & FLAG_PRESENT)) {
         newtable = (uint64_t*)PHYS_TO_VIRT(pmm_get(1));
-
-        for (int i = 0; i < 512; i++)
-            newtable[i] = 0;
+        memset(newtable, 0, PAGE_SIZE);
 
         table[index] = make_table_entry(VIRT_TO_PHYS((uint64_t)newtable), FLAG_PRESENT | FLAG_READWRITE);
     } else

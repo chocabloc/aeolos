@@ -6,6 +6,7 @@
 #include "pmm.h"
 #include "dev/fb/fb.h"
 #include "kconio.h"
+#include "memutils.h"
 #include "sys/panic.h"
 #include "vmm.h"
 #include <stddef.h>
@@ -149,8 +150,7 @@ void pmm_init(stv2_struct_tag_mmap* map)
         }
     }
     // zero it out
-    for (uint64_t i = 0; i < bm_size; i++)
-        bitmap[i] = 0;
+    memset(bitmap, 0, bm_size);
 
     kdbg_info("Keeping bitmap at %x, Size: %d\n", (uint64_t)bitmap, bm_size);
 

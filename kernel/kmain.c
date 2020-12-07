@@ -1,10 +1,10 @@
+#include "acpi/acpi.h"
 #include "dev/fb/fb.h"
 #include "dev/term/term.h"
 #include "kconio.h"
 #include "kmalloc.h"
 #include "mm/pmm.h"
 #include "mm/vmm.h"
-#include "sys/acpi/acpi.h"
 #include "sys/gdt.h"
 #include "sys/idt.h"
 #include <stdbool.h>

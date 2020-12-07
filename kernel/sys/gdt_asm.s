@@ -17,3 +17,4 @@ gdt_load:
     pushq $0x08
     pushq $reload_sr
     lretq
+    
