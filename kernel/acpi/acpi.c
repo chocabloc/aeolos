@@ -40,8 +40,6 @@ acpi_sdt* acpi_get_sdt(const char* sign)
 
 void acpi_init(stv2_struct_tag_rsdp* rsdp_info)
 {
-    kdbg_warn("acpi_init(): STUB!\n");
-
     rsdp = (rsdp_t*)PHYS_TO_VIRT(rsdp_info->rsdp);
 
     kdbg_info("RSDP OEM ID: \"");
@@ -57,6 +55,4 @@ void acpi_init(stv2_struct_tag_rsdp* rsdp_info)
         rsdt = (acpi_sdt*)PHYS_TO_VIRT(rsdp->rsdt_addr);
         xsdt_present = false;
     }
-
-    acpi_get_sdt("APIC");
 }

@@ -36,3 +36,4 @@ typedef struct {
 #define SDT_SIGN_BGRT "BGRT"
 
 void acpi_init(stv2_struct_tag_rsdp*);
+acpi_sdt* acpi_get_sdt(const char* sign);
