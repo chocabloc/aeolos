@@ -1,7 +1,4 @@
-/*
- *  The Physical Memory Manager (Hopefully complete)
- *   if you copy any part of this code, make sure to attribute Aditya Arsh
- */
+// the PMM
 
 #include "pmm.h"
 #include "dev/fb/fb.h"
