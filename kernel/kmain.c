@@ -36,6 +36,7 @@ void kmain(stivale2_struct* bootinfo)
     kdbg_ok("VMM initialized\n");
 
     acpi_init((stv2_struct_tag_rsdp*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_RSDP_ID));
+    kdbg_ok("ACPI tables found\n");
 
     // since we do not need the bootloader info anymore
     pmm_reclaim_bootloader_mem();

@@ -118,12 +118,11 @@ void pmm_init(stv2_struct_tag_mmap* map)
     kdbg_info("Memory map provided by bootloader: \n");
     for (size_t i = 0; i < map->entries; i++) {
         struct stivale2_mmap_entry entry = map->memmap[i];
+        kprintf(" \tBase: %x. Length: %x. Type: %s\n", entry.base, entry.length, mmap_type_to_str(entry.type));
 
         if (entry.base + entry.length <= 0x100000)
             continue;
-
-        kprintf(" \tBase: %x. Length: %x. Type: %s\n", entry.base, entry.length, mmap_type_to_str(entry.type));
-
+            
         uint64_t newphyslimit = entry.base + entry.length;
         if (newphyslimit > memstats.phys_limit)
             memstats.phys_limit = newphyslimit;

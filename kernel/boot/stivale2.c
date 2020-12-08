@@ -1,10 +1,10 @@
+#include "stivale2.h"
+#include "dev/term/term.h"
+#include "mm/vmm.h"
+#include "sys/panic.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
-#include "dev/term/term.h"
-#include "mm/vmm.h"
-#include "stivale2.h"
 
 extern void kmain(stivale2_struct* bootinfo);
 

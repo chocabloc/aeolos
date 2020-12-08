@@ -5,8 +5,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-static rsdp_t* rsdp;
-
 static acpi_sdt* rsdt;
 static acpi_sdt* xsdt;
 
@@ -40,18 +38,18 @@ acpi_sdt* acpi_get_sdt(const char* sign)
 
 void acpi_init(stv2_struct_tag_rsdp* rsdp_info)
 {
-    rsdp = (rsdp_t*)PHYS_TO_VIRT(rsdp_info->rsdp);
+    rsdp_t* rsdp = (rsdp_t*)PHYS_TO_VIRT(rsdp_info->rsdp);
 
     kdbg_info("RSDP OEM ID: \"");
     kputsn(rsdp->oem_id, sizeof(rsdp->oem_id));
     kprintf("\". Revision: %d\n", rsdp->revision);
 
     if (rsdp->revision == 2) {
-        kdbg_info("ACPI v2.0 found.\n");
+        kdbg_info("ACPI v2.0 detected\n");
         xsdt = (acpi_sdt*)PHYS_TO_VIRT(rsdp->xsdt_addr);
         xsdt_present = true;
     } else {
-        kdbg_info("ACPI v1.0 found.");
+        kdbg_info("ACPI v1.0 detected\n");
         rsdt = (acpi_sdt*)PHYS_TO_VIRT(rsdp->rsdt_addr);
         xsdt_present = false;
     }
