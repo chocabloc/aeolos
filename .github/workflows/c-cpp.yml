@@ -13,5 +13,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install mtools
+      run: sudo apt-get install mtools
     - name: make
       run: make
+    - uses: actions/upload-artifact@v2
+      with:
+        name: os.img
+        path: os.img
