@@ -27,7 +27,7 @@ static char* exceptions[] = {
 
 void exc_handler(uint64_t errcode, uint64_t excno)
 {
-    kernel_panic("Unhandled Exception: %s. Error Code: %d.", exceptions[excno], errcode);
+    kernel_panic("Unhandled Exception: %s. Error Code: %d.\n", exceptions[excno], errcode);
     while (true)
         ;
 }

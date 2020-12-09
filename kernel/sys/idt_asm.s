@@ -38,6 +38,9 @@ idt_load:
 	ret
 
 .macro exc_noerrcode excnum
+	push %rbp
+	mov %rsp, %rbp
+
 	push %rax
 	push %rdi
 	push %rsi
@@ -66,15 +69,22 @@ idt_load:
 	pop %rdi
 	pop %rax
 
+	pop %rbp
 	iretq
 .endm
 
 .macro exc_errcode excnum
+	// pop the error code
+	popq %r12
+
+	push %rbp
+	mov %rsp, %rbp
+
 	push %rax
 	push %rdi
 
 	// pass the error code
-	movq 16(%rsp), %rdi
+	movq %r12, %rdi
 
 	push %rsi
 	push %rdx
@@ -99,6 +109,7 @@ idt_load:
 	pop %rdi
 	pop %rax
 
+	pop %rbp
 	iretq
 .endm
 

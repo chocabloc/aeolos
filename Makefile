@@ -13,7 +13,9 @@ $(IMAGEFILE): $(KERNEL)
 	
 $(KERNEL): 
 	@echo Building kernel...
-	@$(MAKE) -C $(KERNELDIR)
+	@$(MAKE) -C $(KERNELDIR) && \
+	 $(MAKE) -C $(KERNELDIR) symbols && \
+	 $(MAKE) -C $(KERNELDIR)
 	
 run: $(IMAGEFILE)
 	@echo Testing image in QEMU...

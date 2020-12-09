@@ -122,7 +122,7 @@ void pmm_init(stv2_struct_tag_mmap* map)
 
         if (entry.base + entry.length <= 0x100000)
             continue;
-            
+
         uint64_t newphyslimit = entry.base + entry.length;
         if (newphyslimit > memstats.phys_limit)
             memstats.phys_limit = newphyslimit;
@@ -163,6 +163,8 @@ void pmm_init(stv2_struct_tag_mmap* map)
 
     // mark the bitmap as used
     pmm_alloc(VIRT_TO_PHYS(bitmap), NUM_PAGES(bm_size));
+
+    kdbg_ok("PMM initialized\n");
 }
 
 // reclaim memory used by bootloader

@@ -1,5 +1,6 @@
 #include "acpi.h"
 #include "kconio.h"
+#include "madt.h"
 #include "memutils.h"
 #include "mm/vmm.h"
 #include <stdbool.h>
@@ -13,19 +14,19 @@ static bool xsdt_present;
 acpi_sdt* acpi_get_sdt(const char* sign)
 {
     if (xsdt_present) {
-        uint64_t len = (xsdt->length - sizeof(acpi_sdt)) / sizeof(uint64_t);
+        uint64_t len = (xsdt->hdr.length - sizeof(acpi_sdt)) / sizeof(uint64_t);
         for (uint64_t i = 0; i < len; i++) {
             acpi_sdt* table = (acpi_sdt*)PHYS_TO_VIRT(((uint64_t*)xsdt->data)[i]);
-            if (memcmp(table->sign, sign, sizeof(table->sign))) {
+            if (memcmp(table->hdr.sign, sign, sizeof(table->hdr.sign))) {
                 kdbg_info("Found ACPI SDT \"%s\"\n", sign);
                 return table;
             }
         }
     } else {
-        uint64_t len = (rsdt->length - sizeof(acpi_sdt)) / sizeof(uint32_t);
+        uint64_t len = (rsdt->hdr.length - sizeof(acpi_sdt)) / sizeof(uint32_t);
         for (uint64_t i = 0; i < len; i++) {
             acpi_sdt* table = (acpi_sdt*)PHYS_TO_VIRT(((uint32_t*)rsdt->data)[i]);
-            if (memcmp(table->sign, sign, sizeof(table->sign))) {
+            if (memcmp(table->hdr.sign, sign, sizeof(table->hdr.sign))) {
                 kdbg_info("Found ACPI SDT \"%s\"\n", sign);
                 return table;
             }
@@ -53,4 +54,6 @@ void acpi_init(stv2_struct_tag_rsdp* rsdp_info)
         rsdt = (acpi_sdt*)PHYS_TO_VIRT(rsdp->rsdt_addr);
         xsdt_present = false;
     }
+
+    kdbg_ok("ACPI tables initialized\n");
 }

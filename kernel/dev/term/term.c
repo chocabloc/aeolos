@@ -1,6 +1,7 @@
 #include "term.h"
 #include "boot/stivale2.h"
 #include "dev/fb/fb.h"
+#include "kconio.h"
 #include "memutils.h"
 #include <stddef.h>
 

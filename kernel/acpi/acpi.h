@@ -17,7 +17,6 @@ typedef struct {
 } __attribute__((packed)) rsdp_t;
 
 typedef struct {
-    // the header
     char sign[4];
     uint32_t length;
     uint8_t rev;
@@ -27,6 +26,11 @@ typedef struct {
     uint32_t oem_rev;
     uint32_t creator_id;
     uint32_t creator_rev;
+} __attribute__((packed)) acpi_sdt_hdr;
+
+typedef struct {
+    // the header
+    acpi_sdt_hdr hdr;
 
     // the data
     uint8_t data[];

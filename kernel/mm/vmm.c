@@ -29,6 +29,7 @@ static void _vmm_map_rec(uint64_t* table, uint64_t virtaddr, uint64_t physaddr, 
 
     if (plevel == 0) {
         table[index] = make_table_entry(physaddr, FLAG_PRESENT | FLAG_READWRITE);
+        *((uint64_t*)0x4000000000) = 2345;
         return;
     }
 
@@ -72,5 +73,5 @@ void vmm_init()
         : "g"((uint64_t)&PML4 - HIGHERHALF_OFFSET)
         : "rax");
 
-    kdbg_info("Updated CR3\n");
+    kdbg_ok("VMM initialized\n");
 }
