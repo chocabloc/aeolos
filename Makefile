@@ -19,7 +19,7 @@ $(KERNEL):
 	
 run: $(IMAGEFILE)
 	@echo Testing image in QEMU...
-	@qemu-system-x86_64 $(IMAGEFILE) -bios /usr/share/ovmf/OVMF.fd -m 4096 -no-reboot -no-shutdown -enable-kvm -smp 4
+	@qemu-system-x86_64 $(IMAGEFILE) -bios /usr/share/ovmf/OVMF.fd -m 4096 -no-reboot -no-shutdown -smp 4
 	
 clean:
 	@$(MAKE) -C $(KERNELDIR) clean
