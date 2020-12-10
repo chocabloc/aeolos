@@ -1,10 +1,5 @@
-CC=clang
-LD=clang
-AS=clang
-
-CFLAGS =-ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wall -Wextra -I . -I lib
-ASFLAGS = -I .
-LINKFLAGS = -Wl,-Tlinker.ld -nostdlib
+KERNELFILE = kernel.elf
+LINKSCRIPT = linker.ld
 
 CFILES = $(wildcard *.c boot/*.c dev/term/*.c dev/fb/*.c sys/*.c acpi/*.c mm/*.c lib/*.c)
 ASMFILES = $(wildcard *.s boot/*.s dev/term/*.s sys/*.s)
@@ -12,25 +7,49 @@ ASMFILES = $(wildcard *.s boot/*.s dev/term/*.s sys/*.s)
 COBJS = $(patsubst %.c, %.o, $(CFILES))
 ASMOBJS = $(patsubst %.s, %.o, $(ASMFILES))
 
-.PHONY: clean kernel symbols
+SYMBOLFILE = symbols.c
+SYMBOLOBJ = symbols.o
 
-kernel: kernel.elf
+CC = clang
+LD = clang
+AS = clang
+GENSYM = ./gensym
 
-symbols: 
-	./gensym kernel.elf
+CFLAGS = -ffreestanding  \
+		 -mcmodel=kernel \
+		 -mno-red-zone   \
+		 -mno-mmx        \
+		 -mno-sse        \
+		 -mno-sse2       \
+		 -Wall           \
+		 -Wextra         \
+		 -I .            \
+		 -I lib
+
+ASFLAGS = -I .
+LINKFLAGS = -Wl,-T$(LINKSCRIPT) -nostdlib
+
+.PHONY: clean kernel
+
+kernel: $(KERNELFILE)
 	
-kernel.elf: $(COBJS) $(ASMOBJS)
+$(KERNELFILE): $(COBJS) $(ASMOBJS)
 	@echo Linking all objects...
-	@$(LD) -o kernel.elf $^ $(LINKFLAGS)
+	@$(LD) -o $@ $^ $(LINKFLAGS) && \
+	echo "Generating symbols..." && \
+	./$(GENSYM) $@ && \
+	$(CC) -o $(SYMBOLOBJ) -c $(SYMBOLFILE) $(CFLAGS) && \
+	echo "Linking symbols..." && \
+	$(LD) -o $(KERNELFILE) $^ $(LINKFLAGS)
 	
 $(COBJS): %.o: %.c
-	@echo Compiling $< ...
-	@$(CC) -o $@ -c $< $(CFLAGS)
+	@echo Compiling $^ ...
+	@$(CC) -o $@ -c $^ $(CFLAGS)
 
 $(ASMOBJS): %.o: %.s
-	@echo Compiling $< ...
-	@$(AS) -o $@ -c $< $(ASFLAGS)
+	@echo Compiling $^ ...
+	@$(AS) -o $@ -c $^ $(ASFLAGS)
 
 clean: 
 	@echo Cleaning...
-	@rm -f $(COBJS) $(ASMOBJS) kernel.elf kernel.sym
+	@rm -f $(COBJS) $(ASMOBJS) $(KERNELFILE)
