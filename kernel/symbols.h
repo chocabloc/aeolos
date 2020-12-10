@@ -8,4 +8,4 @@ typedef struct {
 } symbol_t;
 
 // contents automatically generated during build
-extern symbol_t _kernel_symtab[];
+__attribute__((weak)) extern symbol_t _kernel_symtab[];
