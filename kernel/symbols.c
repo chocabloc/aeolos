@@ -6,7 +6,7 @@
 #include "symbols.h"
 #include <stdint.h>
 
-symbol_t _kernel_symtab[]={
+symbol_t _kernel_symtab[] = {
     { .addr = 0xffffffff80100030, .name = "kmain" },
     { .addr = 0xffffffff80100140, .name = "stv2_find_struct_tag" },
     { .addr = 0xffffffff801001d0, .name = "term_clear" },
