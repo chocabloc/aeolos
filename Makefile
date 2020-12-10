@@ -13,7 +13,7 @@ IMAGEDIR = image
 KERNELFILE = kernel.elf
 IMAGEFILE = os.img
 
-.PHONY: run $(IMAGEFILE) clean
+.PHONY: run $(IMAGEFILE) $(KERNELDIR)/$(KERNELFILE) clean
 
 $(IMAGEFILE): $(IMAGEDIR)/$(KERNELFILE)
 	@echo Generating Hard Disk Image...
