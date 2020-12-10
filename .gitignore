@@ -3,6 +3,5 @@
 *.elf
 *.vdi
 *.sym
-symbols.c
 .vscode/*
 .vscode
