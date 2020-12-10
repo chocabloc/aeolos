@@ -4,7 +4,7 @@ AS=clang
 
 CFLAGS =-ffreestanding -mcmodel=kernel -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wall -Wextra -I . -I lib
 ASFLAGS = -I .
-LINKFLAGS = -Wl,-Tlinker.ld -nostdlib -Wl,--unresolved-symbols=ignore-all
+LINKFLAGS = -Wl,-Tlinker.ld -nostdlib
 
 CFILES = $(wildcard *.c boot/*.c dev/term/*.c dev/fb/*.c sys/*.c acpi/*.c mm/*.c lib/*.c)
 ASMFILES = $(wildcard *.s boot/*.s dev/term/*.s sys/*.s)

@@ -11,7 +11,7 @@ extern void kernel_end;
 // get function name from address, using the symbol table
 static const char* symtab_get_func(uint64_t addr)
 {
-    for (int i = 0; _kernel_symtab[i].addr != 0xffffffffffffffff; i++)
+    for (int i = 0; _kernel_symtab[i].addr < UINT64_MAX; i++)
         if (_kernel_symtab[i].addr < addr && _kernel_symtab[i + 1].addr > addr)
             return _kernel_symtab[i].name;
 
