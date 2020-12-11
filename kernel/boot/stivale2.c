@@ -6,8 +6,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-extern void kmain(stivale2_struct* bootinfo);
-
 static uint8_t kernel_stack[16384] = { 0 };
 
 // framebuffer request tag for bootloader
@@ -20,7 +18,7 @@ static stv2_hdr_tag_fb header_fb_tag = {
 
 // stivale2 header
 __attribute__((section(".stivale2hdr"), used)) static stv2_hdr header = {
-    .entry_point = (uint64_t)&kmain,
+    .entry_point = 0,
     .stack = (uintptr_t)kernel_stack + sizeof(kernel_stack),
     .flags = 0,
     .tags = (uint64_t)&header_fb_tag

@@ -1,3 +1,5 @@
+ENTRY(_start)
+
 offset = 0xffffffff80000000;
 
 SECTIONS
