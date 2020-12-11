@@ -14,3 +14,4 @@
 #define PHYS_TO_VIRT(a) ((uint64_t)(a) + MEM_VIRT_OFFSET)
 
 void vmm_init();
+void vmm_map(uint64_t virtaddr, uint64_t physaddr, uint64_t numpages);
