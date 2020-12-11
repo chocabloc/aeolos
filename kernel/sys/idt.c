@@ -1,28 +1,8 @@
 #include "idt.h"
+#include "isrs.h"
 #include <stdint.h>
 
-static struct idt_entry IDT[32];
-
-extern void isr0();
-extern void isr1();
-extern void isr2();
-extern void isr3();
-extern void isr4();
-extern void isr5();
-extern void isr6();
-extern void isr7();
-extern void isr8();
-extern void isr10();
-extern void isr11();
-extern void isr12();
-extern void isr13();
-extern void isr14();
-extern void isr16();
-extern void isr17();
-extern void isr18();
-extern void isr19();
-extern void isr20();
-extern void isr30();
+static struct idt_entry IDT[256];
 
 extern void idt_load(struct idtr*);
 
@@ -35,6 +15,11 @@ static struct idt_entry idt_make_entry(uint64_t offset)
         .offset_63_32 = (offset >> 32) & 0xFFFFFFFF,
         .flags = IDT_FLAGS_DEFAULT
     };
+}
+
+void idt_set_handler(uint8_t vector, void* handler)
+{
+    IDT[vector] = idt_make_entry((uint64_t)handler);
 }
 
 void idt_init()

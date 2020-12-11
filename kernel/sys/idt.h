@@ -21,3 +21,4 @@ struct idtr {
 } __attribute__((packed));
 
 void idt_init();
+void idt_set_handler(uint8_t vector, void* handler);
