@@ -10,5 +10,18 @@ void gdt_init()
     struct gdtr g = { .base = (uint64_t)&GDT,
         .limit = (3 * 8 - 1) };
 
-    gdt_load(&g);
+    asm volatile("lgdt %0;"
+                 "pushq $0x08;"
+                 "pushq $reload_sr;"
+                 "lretq;"
+                 "reload_sr:"
+                 "movw $0x10, %%ax;"
+                 "movw %%ax, %%ds;"
+                 "movw %%ax, %%es;"
+                 "movw %%ax, %%ss;"
+                 "movw %%ax, %%fs;"
+                 "movw %%ax, %%gs;"
+                 :
+                 : "g"(g)
+                 :);
 }
