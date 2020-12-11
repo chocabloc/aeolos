@@ -15,15 +15,17 @@ LD = clang
 AS = clang
 GENSYM = ./gensym
 
-CFLAGS = -ffreestanding  \
+CFLAGS = -ffreestanding \
 		 -mcmodel=kernel \
-		 -mno-red-zone   \
-		 -mno-mmx        \
-		 -mno-sse        \
-		 -mno-sse2       \
-		 -Wall           \
-		 -Wextra         \
-		 -I .            \
+		 -mno-red-zone \
+		 -mno-mmx \
+		 -mno-sse \
+		 -mno-sse2 \
+		 -Wall \
+		 -Wextra \
+		 -Ofast \
+		 -fno-omit-frame-pointer \
+		 -I . \
 		 -I lib
 
 ASFLAGS = -I .
