@@ -8,4 +8,4 @@ typedef struct {
 } symbol_t;
 
 // contents automatically generated during build
-extern symbol_t _kernel_symtab[];
+extern const symbol_t _kernel_symtab[];

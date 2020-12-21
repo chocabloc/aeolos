@@ -7,8 +7,8 @@ ASMFILES = $(wildcard *.s boot/*.s dev/term/*.s sys/*.s)
 COBJS = $(patsubst %.c, %.o, $(CFILES))
 ASMOBJS = $(patsubst %.s, %.o, $(ASMFILES))
 
-SYMBOLFILE = symbols.c
-SYMBOLOBJ = symbols.o
+SYMBOLFILE = _symbols.c
+SYMBOLOBJ = _symbols.o
 
 CC = clang
 LD = clang
@@ -42,7 +42,7 @@ $(KERNELFILE): $(COBJS) $(ASMOBJS)
 	./$(GENSYM) $@ && \
 	$(CC) -o $(SYMBOLOBJ) -c $(SYMBOLFILE) $(CFLAGS) && \
 	echo "Linking symbols..." && \
-	$(LD) -o $(KERNELFILE) $^ $(LINKFLAGS)
+	$(LD) -o $(KERNELFILE) $(SYMBOLOBJ) $(filter-out $(SYMBOLOBJ), $^) $(LINKFLAGS)
 	
 $(COBJS): %.o: %.c
 	@echo Compiling $^ ...
