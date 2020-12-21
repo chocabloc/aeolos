@@ -1,5 +1,6 @@
 #include "kconio.h"
 #include "dev/term/term.h"
+#include <stdbool.h>
 #include <stddef.h>
 
 int kvprintf(const char* s, va_list args)
@@ -22,6 +23,10 @@ int kvprintf(const char* s, va_list args)
 
             case 's':
                 term_puts(va_arg(args, const char*));
+                break;
+
+            case 'b':
+                term_puts(va_arg(args, int) ? "true" : "false");
                 break;
             }
             i++;
