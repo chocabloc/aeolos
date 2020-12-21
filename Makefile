@@ -2,9 +2,11 @@ GENIMG = ./genimg
 QEMU = qemu-system-x86_64
 
 QEMUFLAGS =	-bios /usr/share/ovmf/OVMF.fd \
-			-m 4096                       \
-			-no-reboot                    \
-			-no-shutdown                  \
+			-m 4096 \
+			-no-reboot \
+			-no-shutdown \
+			-enable-kvm \
+			-cpu qemu64,+avx \
 			-smp 4
 
 KERNELDIR = kernel
