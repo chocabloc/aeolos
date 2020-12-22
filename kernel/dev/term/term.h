@@ -41,3 +41,4 @@ void term_putint(int n);
 void term_setfgcolor(uint32_t color);
 void term_setbgcolor(uint32_t color);
 void term_clear();
+void term_flush();

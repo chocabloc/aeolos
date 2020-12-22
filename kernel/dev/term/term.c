@@ -50,6 +50,12 @@ static void putchar_at(uint8_t c, size_t px, size_t py)
     }
 }
 
+// update the terminal
+void term_flush()
+{
+    fb_swap_buffers();
+}
+
 // clear the screen with the background color
 void term_clear()
 {
