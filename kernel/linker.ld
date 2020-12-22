@@ -1,4 +1,4 @@
-ENTRY(_start)
+ENTRY(kmain)
 
 offset = 0xffffffff80000000;
 
