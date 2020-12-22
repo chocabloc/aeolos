@@ -41,10 +41,6 @@ void acpi_init(stv2_struct_tag_rsdp* rsdp_info)
 {
     rsdp_t* rsdp = (rsdp_t*)PHYS_TO_VIRT(rsdp_info->rsdp);
 
-    kdbg_info("RSDP OEM ID: \"");
-    kputsn(rsdp->oem_id, sizeof(rsdp->oem_id));
-    kprintf("\". Revision: %d\n", rsdp->revision);
-
     if (rsdp->revision == 2) {
         kdbg_info("ACPI v2.0 detected\n");
         xsdt = (acpi_sdt*)PHYS_TO_VIRT(rsdp->xsdt_addr);

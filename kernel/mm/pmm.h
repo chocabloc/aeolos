@@ -19,7 +19,6 @@ typedef struct {
 
 void pmm_init(stv2_struct_tag_mmap* map);
 void pmm_reclaim_bootloader_mem();
-void pmm_vibe_check();
 
 uint64_t pmm_get(uint64_t numpages);
 void pmm_free(uint64_t addr, uint64_t numpages);

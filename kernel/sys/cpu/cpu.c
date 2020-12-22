@@ -36,7 +36,6 @@ void wrmsr(uint32_t msr, uint64_t val)
 // enable cpu features like sse2
 void cpu_features_init()
 {
-    kdbg_warn("cpu_features_init(): STUB\n");
     kdbg_info("CPU Information: \n");
 
     char vendor[13];
@@ -63,4 +62,6 @@ void cpu_features_init()
     write_cr(cr4, vcr4);
 
     // we do not have any support for saving state yet :(
+
+    kdbg_ok("CPU features initialized\n");
 }

@@ -25,43 +25,27 @@ void madt_init()
     if (!madt)
         kernel_panic("MADT not found\n");
 
-    kdbg_info("LAPIC address: %x, Flags: %x\n", madt->lapic_addr, madt->flags);
-
     uint64_t size = madt->hdr.length - sizeof(madt_t);
     for (uint64_t i = 0; i < size;) {
         madt_record_hdr* rec = (madt_record_hdr*)(madt->records + i);
         switch (rec->type) {
         case MADT_RECORD_TYPE_LAPIC: {
             madt_record_lapic* lapic = (madt_record_lapic*)rec;
-            kdbg_info("Local APIC found. Processor ID: %d\n", lapic->proc_id, lapic->apic_id);
             lapics[num_lapic++] = lapic;
+
+            if (num_lapic > 256)
+                kernel_panic("More than 256 LAPIC's found!");
         } break;
 
         case MADT_RECORD_TYPE_IOAPIC: {
             madt_record_ioapic* ioapic = (madt_record_ioapic*)rec;
-            kdbg_info("I/O APIC found. Address: %x\n", ioapic->addr);
             io_apics[num_ioapic++] = ioapic;
-            if (num_ioapic >= 4)
+
+            if (num_ioapic > 4)
                 kernel_panic("More than 4 I/O APIC's found!");
         } break;
 
-        case MADT_RECORD_TYPE_ISO: {
-            madt_record_iso* iso = (madt_record_iso*)rec;
-            kdbg_info("Interrupt Source Override found. IRQ src: %d\n", iso->irq_src);
-        } break;
-
-        case MADT_RECORD_TYPE_NMI: {
-            madt_record_nmi* nmi = (madt_record_nmi*)rec;
-            kdbg_info("NMI found: LINT%d\n", nmi->lint);
-        } break;
-
-        case MADT_RECORD_TYPE_LAPIC_AO: {
-            madt_record_lapic_ao* ao = (madt_record_lapic_ao*)rec;
-            kdbg_info("LAPIC AO found. Processor ID: %d. New Addr: %x\n", ao->proc_id, ao->addr);
-        } break;
-
-        default:
-            break;
+            // TODO: Handle MADT_RECORD_TYPE_ISO and MADT_RECORD_TYPE_NMI
         }
         i += rec->len;
     }

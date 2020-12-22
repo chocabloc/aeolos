@@ -20,37 +20,6 @@ static stv2_struct_tag_mmap* mmap;
 // memory stats: total mem, free mem, etc
 static mem_info memstats;
 
-// convert a memory map type to human readable string
-static const char* mmap_type_to_str(uint64_t type)
-{
-    switch (type) {
-    case STIVALE2_MMAP_USABLE:
-        return "Usable";
-        break;
-    case STIVALE2_MMAP_RESERVED:
-        return "Reserved";
-        break;
-    case STIVALE2_MMAP_ACPI_RECLAIMABLE:
-        return "ACPI (Reclaimable)";
-        break;
-    case STIVALE2_MMAP_ACPI_NVS:
-        return "ACPI Non-Volatile Storage";
-        break;
-    case STIVALE2_MMAP_BAD_MEMORY:
-        return "Faulty Memory";
-        break;
-    case STIVALE2_MMAP_BOOTLOADER_RECLAIMABLE:
-        return "Bootloader (Reclaimable)";
-        break;
-    case STIVALE2_MMAP_KERNEL_AND_MODULES:
-        return "Kernel and/or Modules";
-        break;
-    default:
-        return "Invalid Memory Type";
-        break;
-    }
-}
-
 static void bmp_markused(uint64_t addr, uint64_t numpages)
 {
     for (uint64_t i = addr; i < addr + (numpages * PAGE_SIZE); i += PAGE_SIZE) {
@@ -115,10 +84,8 @@ void pmm_init(stv2_struct_tag_mmap* map)
     mmap = map;
 
     // calculate memory statistics
-    kdbg_info("Memory map provided by bootloader: \n");
     for (size_t i = 0; i < map->entries; i++) {
         struct stivale2_mmap_entry entry = map->memmap[i];
-        kprintf(" \tBase: %x. Length: %x. Type: %s\n", entry.base, entry.length, mmap_type_to_str(entry.type));
 
         if (entry.base + entry.length <= 0x100000)
             continue;
@@ -130,7 +97,7 @@ void pmm_init(stv2_struct_tag_mmap* map)
         if (entry.type == STIVALE2_MMAP_USABLE)
             memstats.total_mem += entry.length;
     }
-    kdbg_info("Physical Limit: %x. Total Mem: %d\n", memstats.phys_limit, memstats.total_mem / (1024 * 1024));
+    kdbg_info("PMM: Physical Limit = %x. Total Mem = %d MB\n", memstats.phys_limit, memstats.total_mem / (1024 * 1024));
 
     // look for a good place to keep our bitmap
     uint64_t bm_size = memstats.phys_limit / (PAGE_SIZE * BMP_PAGES_PER_BYTE);
@@ -147,8 +114,6 @@ void pmm_init(stv2_struct_tag_mmap* map)
     }
     // zero it out
     memset(bitmap, 0, bm_size);
-
-    kdbg_info("Keeping bitmap at %x, Size: %d\n", (uint64_t)bitmap, bm_size);
 
     // now populate the bitmap
     for (size_t i = 0; i < map->entries; i++) {
@@ -176,22 +141,6 @@ void pmm_reclaim_bootloader_mem()
         if (entry.type == STIVALE2_MMAP_BOOTLOADER_RECLAIMABLE)
             pmm_free(entry.base, NUM_PAGES(entry.length));
     }
-}
-
-// check if the pmm bitmap is sane
-void pmm_vibe_check()
-{
-    uint64_t actual = 0;
-
-    for (uint64_t i = 0; i < memstats.phys_limit; i += PAGE_SIZE) {
-        if (bmp_isfree(i, 1))
-            actual += PAGE_SIZE;
-    }
-
-    kdbg_info("PMM Vibe Check: Actual= %x, Expected= %x\n", actual, memstats.free_mem);
-
-    if (actual != memstats.free_mem)
-        kernel_panic("PMM Vibe Check Failed");
 }
 
 const mem_info* pmm_get_mem_info() { return &memstats; }

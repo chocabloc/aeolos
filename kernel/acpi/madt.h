@@ -47,14 +47,6 @@ typedef struct {
     uint8_t lint;
 } __attribute__((packed)) madt_record_nmi;
 
-// LAPIC Address Override
-typedef struct {
-    madt_record_hdr hdr;
-
-    uint16_t proc_id;
-    uint64_t addr;
-} __attribute__((packed)) madt_record_lapic_ao;
-
 typedef struct {
     acpi_sdt_hdr hdr;
 
@@ -63,16 +55,6 @@ typedef struct {
 
     uint8_t records[];
 } __attribute__((packed)) madt_t;
-
-typedef struct {
-    uint64_t num;
-    madt_record_ioapic* entries[4];
-} madt_ioapic_info;
-
-typedef struct {
-    uint64_t num;
-    madt_record_lapic* entries[256];
-} madt_lapic_info;
 
 #define MADT_RECORD_TYPE_LAPIC 0
 #define MADT_RECORD_TYPE_IOAPIC 1
