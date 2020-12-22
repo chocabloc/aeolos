@@ -22,5 +22,5 @@ void apic_init()
 
     madt_init();
     lapic_base = (void*)PHYS_TO_VIRT(madt_get_lapic_base());
-    vmm_map((uint64_t)lapic_base, VIRT_TO_PHYS(lapic_base), 1);
+    vmm_map((uint64_t)lapic_base, VIRT_TO_PHYS(lapic_base), 1, FLAG_DEFAULT);
 }
