@@ -16,6 +16,50 @@
 extern uint8_t kernel_start;
 extern uint8_t kernel_end;
 
+static void printbanner()
+{
+    term_setfgcolor(TERM_COLOR_WHITE);
+    kputchar(' ');
+    kputchar(0xda);
+    for (int i = 0; i < 15; i++)
+        kputchar(0xc4);
+    kputchar(0xbf);
+    kputs("\n ");
+    kputchar(0xb3);
+    kputs("               ");
+    kputchar(0xb3);
+    term_setfgcolor(TERM_COLOR_GRAY);
+    kputchar(0xb1);
+    term_setfgcolor(TERM_COLOR_WHITE);
+    kputs("\n ");
+    kputchar(0xb3);
+    kputs("  Aeolos v0.1  ");
+    kputchar(0xb3);
+    term_setfgcolor(TERM_COLOR_GRAY);
+    kputchar(0xb1);
+    term_setfgcolor(TERM_COLOR_WHITE);
+    kputs("\n ");
+    kputchar(0xb3);
+    kputs("               ");
+    kputchar(0xb3);
+    term_setfgcolor(TERM_COLOR_GRAY);
+    kputchar(0xb1);
+    term_setfgcolor(TERM_COLOR_WHITE);
+    kputs("\n ");
+    kputchar(0xc0);
+    for (int i = 0; i < 15; i++)
+        kputchar(0xc4);
+    kputchar(0xd9);
+    term_setfgcolor(TERM_COLOR_GRAY);
+    kputchar(0xb1);
+    term_setfgcolor(TERM_COLOR_WHITE);
+    kputs("\n  ");
+    term_setfgcolor(TERM_COLOR_GRAY);
+    for (int i = 0; i <= 16; i++)
+        kputchar(0xd8);
+    kputs("\n\n");
+}
+
 void kmain(stivale2_struct* bootinfo)
 {
     // convert the physical address to a virtual one, since we will be removing identity mapping later
@@ -30,7 +74,7 @@ void kmain(stivale2_struct* bootinfo)
     term_init();
     term_clear();
 
-    kprintf("==Aeolos v0.1==\n\n");
+    printbanner();
 
     // initialize pmm and vmm
     pmm_init((stv2_struct_tag_mmap*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_MMAP_ID));
@@ -45,7 +89,6 @@ void kmain(stivale2_struct* bootinfo)
 
     // since we do not need the bootloader info anymore
     pmm_reclaim_bootloader_mem();
-    pmm_vibe_check();
 
     kdbg_info("Testing interrupts...\n");
     // testing interrupts by doing a page fault
