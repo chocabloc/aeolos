@@ -28,8 +28,9 @@ static void _vmm_map_rec(uint64_t* table, uint64_t virtaddr, uint64_t physaddr, 
 {
     // clear the pat flag if set, since it only applies to pt entries
     bool pat = false;
-    if (flags & FLAG_USE_PAT) {
-        flags &= ~(FLAG_USE_PAT);
+    uint64_t nflags = flags;
+    if (nflags & FLAG_USE_PAT) {
+        nflags &= ~(FLAG_USE_PAT);
         pat = true;
     }
 
@@ -39,8 +40,8 @@ static void _vmm_map_rec(uint64_t* table, uint64_t virtaddr, uint64_t physaddr, 
 
     if (plevel == 0) {
         // set the pat flag if pat is to be used
-        flags |= pat ? FLAG_USE_PAT : 0;
-        table[index] = make_table_entry(physaddr, flags);
+        nflags |= pat ? FLAG_USE_PAT : 0;
+        table[index] = make_table_entry(physaddr, nflags);
         return;
     }
 
@@ -49,7 +50,7 @@ static void _vmm_map_rec(uint64_t* table, uint64_t virtaddr, uint64_t physaddr, 
         newtable = (uint64_t*)PHYS_TO_VIRT(pmm_get(1));
         memset(newtable, 0, PAGE_SIZE);
 
-        table[index] = make_table_entry(VIRT_TO_PHYS((uint64_t)newtable), flags);
+        table[index] = make_table_entry(VIRT_TO_PHYS((uint64_t)newtable), nflags);
     } else
         newtable = (uint64_t*)PHYS_TO_VIRT(((table[index] >> 12) << 12));
 
