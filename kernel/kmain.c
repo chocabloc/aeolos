@@ -7,6 +7,7 @@
 #include "mm/pmm.h"
 #include "mm/vmm.h"
 #include "sys/apic.h"
+#include "sys/cpu/cpu.h"
 #include "sys/gdt.h"
 #include "sys/idt.h"
 #include <stdbool.h>
@@ -20,18 +21,24 @@ void kmain(stivale2_struct* bootinfo)
     // convert the physical address to a virtual one, since we will be removing identity mapping later
     bootinfo = (stivale2_struct*)PHYS_TO_VIRT(bootinfo);
 
+    // initialize gdt and idt
     gdt_init();
     idt_init();
 
+    // initialize framebuffer and terminal
     fb_init((stv2_struct_tag_fb*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_FB_ID));
     term_init();
     term_clear();
 
     kprintf("==Aeolos v0.1==\n\n");
 
+    // initialize pmm and vmm
     pmm_init((stv2_struct_tag_mmap*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_MMAP_ID));
     vmm_init();
+    cpu_features_init();
+    fb_enable_double_buffering();
 
+    // parse acpi tables
     acpi_init((stv2_struct_tag_rsdp*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_RSDP_ID));
 
     apic_init();
