@@ -17,7 +17,7 @@ void cpuid(uint32_t func, uint32_t param, uint32_t* eax, uint32_t* ebx, uint32_t
 bool cpuid_check_feature(cpuid_feature_t feature)
 {
     uint32_t regs[4];
-    cpuid(feature.func, 0, &regs[cpuid_eax], &regs[cpuid_ebx], &regs[cpuid_ecx], &regs[cpuid_edx]);
+    cpuid(feature.func, feature.param, &regs[cpuid_eax], &regs[cpuid_ebx], &regs[cpuid_ecx], &regs[cpuid_edx]);
 
     if (regs[feature.reg] & feature.mask)
         return true;
