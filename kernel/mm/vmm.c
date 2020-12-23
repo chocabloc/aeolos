@@ -91,6 +91,6 @@ void vmm_init()
     vmm_map((uint64_t)fb->addr, VIRT_TO_PHYS(fb->addr), fbsize, FLAG_DEFAULT | FLAG_USE_PAT);
 
     // update cr3
-    write_cr(cr3, (uint64_t)&PML4 - HIGHERHALF_OFFSET);
+    write_cr("cr3", (uint64_t)&PML4 - HIGHERHALF_OFFSET);
     kdbg_ok("VMM initialized\n");
 }

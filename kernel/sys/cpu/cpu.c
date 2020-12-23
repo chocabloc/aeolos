@@ -49,17 +49,17 @@ void cpu_features_init()
 
     // clear the CR0.EM bit and set the CR0.MP bit
     uint64_t vcr0;
-    read_cr(cr0, &vcr0);
+    read_cr("cr0", &vcr0);
     vcr0 &= ~(1 << 2);
     vcr0 |= 1 << 1;
-    write_cr(cr0, vcr0);
+    write_cr("cr0", vcr0);
 
     // set the CR4.OSFXSR and CR4.OSXMMEXCPT bit
     uint64_t vcr4;
-    read_cr(cr4, &vcr4);
+    read_cr("cr4", &vcr4);
     vcr4 |= 1 << 9;
     vcr4 |= 1 << 10;
-    write_cr(cr4, vcr4);
+    write_cr("cr4", vcr4);
 
     // we do not have any support for saving state yet :(
 
