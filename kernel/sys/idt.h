@@ -22,3 +22,4 @@ struct idtr {
 
 void idt_init();
 void idt_set_handler(uint8_t vector, void* handler);
+uint8_t idt_get_vector();

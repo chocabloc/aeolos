@@ -1,8 +1,12 @@
 #include "idt.h"
 #include "isrs.h"
+#include "panic.h"
 #include <stdint.h>
 
 static struct idt_entry IDT[256];
+
+// start allocating irq's at 60
+static uint8_t lastvector = 60;
 
 extern void idt_load(struct idtr*);
 
@@ -20,6 +24,15 @@ static struct idt_entry idt_make_entry(uint64_t offset)
 void idt_set_handler(uint8_t vector, void* handler)
 {
     IDT[vector] = idt_make_entry((uint64_t)handler);
+}
+
+uint8_t idt_get_vector()
+{
+    lastvector++;
+    if (lastvector == 0)
+        kernel_panic("Out of IRQ vectors\n");
+
+    return lastvector;
 }
 
 void idt_init()
