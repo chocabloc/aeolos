@@ -6,7 +6,7 @@
 #include "lib/random.h"
 #include "mm/pmm.h"
 #include "mm/vmm.h"
-#include "sys/apic.h"
+#include "sys/apic/apic.h"
 #include "sys/cpu/cpu.h"
 #include "sys/gdt.h"
 #include "sys/idt.h"

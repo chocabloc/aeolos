@@ -3,6 +3,8 @@
 #include "acpi/madt.h"
 #include "kconio.h"
 #include "mm/vmm.h"
+#include "sys/cpu/cpu.h"
+#include "timer.h"
 
 static void* lapic_base;
 
@@ -16,11 +18,17 @@ void apic_write_reg(uint16_t offset, uint32_t val)
     *(uint32_t*)(lapic_base + offset) = val;
 }
 
+void apic_send_eoi()
+{
+    apic_write_reg(APIC_REG_EOI, 1);
+}
+
 void apic_init()
 {
-    kdbg_warn("apic_init(): STUB\n");
-
     madt_init();
     lapic_base = (void*)PHYS_TO_VIRT(madt_get_lapic_base());
     vmm_map((uint64_t)lapic_base, VIRT_TO_PHYS(lapic_base), 1, FLAG_DEFAULT);
+
+    apic_timer_init();
+    kdbg_ok("APIC Initialized\n");
 }
