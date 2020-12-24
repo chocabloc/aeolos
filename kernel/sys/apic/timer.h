@@ -18,6 +18,6 @@ typedef enum {
 void apic_timer_init();
 void apic_timer_disable();
 void apic_timer_enable();
-void apic_timer_set_handler(void* h);
+void apic_timer_set_handler(void (*h)(void));
 void apic_timer_set_frequency(uint64_t freq);
 void apic_timer_set_mode(apic_timer_mode_t mode);

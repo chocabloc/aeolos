@@ -9,16 +9,11 @@
 static uint64_t base_freq;
 static uint8_t divisor;
 static uint8_t vector;
-static void (*handler)(void) = NULL;
 
+// a dummy handler, just sends eoi
 __attribute__((interrupt)) static void apic_timer_handler(void* v __attribute__((unused)))
 {
-    // call the registered handler if present
-    if (handler)
-        handler();
-    else
-        kdbg_warn("Got APIC Timer IRQ but no handler found\n");
-
+    kdbg_warn("APIC Timer: No handler registered\n");
     apic_send_eoi();
 }
 
@@ -34,9 +29,9 @@ void apic_timer_enable()
     apic_write_reg(APIC_REG_TIMER_LVT, val & ~(APIC_TIMER_FLAG_MASKED));
 }
 
-void apic_timer_set_handler(void* h)
+void apic_timer_set_handler(void (*h)(void))
 {
-    handler = h;
+    idt_set_handler(vector, h);
 }
 
 void apic_timer_set_frequency(uint64_t freq)
