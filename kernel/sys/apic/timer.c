@@ -39,6 +39,11 @@ void apic_timer_set_frequency(uint64_t freq)
     apic_write_reg(APIC_REG_TIMER_ICR, base_freq / (freq * divisor));
 }
 
+uint8_t apic_timer_get_vector()
+{
+    return vector;
+}
+
 void apic_timer_set_mode(apic_timer_mode_t mode)
 {
     uint32_t val = apic_read_reg(APIC_REG_TIMER_LVT);
