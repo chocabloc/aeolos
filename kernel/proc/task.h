@@ -1,6 +1,9 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
+
+#define TID_MAX 65536
 
 typedef struct {
     uint64_t r15;
@@ -26,10 +29,13 @@ typedef struct {
 } task_state_t;
 
 typedef struct task_t {
-    void* kstack_top; // top of kernel stack, will also contain state
+    void* kstack_top; // top of kernel stack
     uint64_t cr3; // virtual address space
+    uint64_t tid; // task id
     struct task_t* next;
 } task_t;
 
 void task_init();
-void task_create(void* entrypoint);
+int task_create(void* entrypoint);
+bool task_destroy(uint64_t tid);
+void task_yield();
