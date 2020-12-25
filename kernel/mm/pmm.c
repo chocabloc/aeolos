@@ -94,7 +94,8 @@ void pmm_init(stv2_struct_tag_mmap* map)
         if (newphyslimit > memstats.phys_limit)
             memstats.phys_limit = newphyslimit;
 
-        if (entry.type == STIVALE2_MMAP_USABLE)
+        if (entry.type == STIVALE2_MMAP_USABLE || entry.type == STIVALE2_MMAP_BOOTLOADER_RECLAIMABLE
+            || entry.type == STIVALE2_MMAP_ACPI_RECLAIMABLE || entry.type == STIVALE2_MMAP_KERNEL_AND_MODULES)
             memstats.total_mem += entry.length;
     }
     kdbg_info("PMM: Physical Limit = %x. Total Mem = %d MB\n", memstats.phys_limit, memstats.total_mem / (1024 * 1024));
