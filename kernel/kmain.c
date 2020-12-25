@@ -17,18 +17,6 @@
 extern uint8_t kernel_start;
 extern uint8_t kernel_end;
 
-void task1()
-{
-    while (true) {
-        kprintf("Hello from task 1\n");
-    }
-}
-void task2()
-{
-    while (true) {
-        kprintf("Task 2 says hello\n");
-    }
-}
 void kmain(stivale2_struct* bootinfo)
 {
     // convert the physical address to a virtual one, since we will be removing identity mapping later
@@ -65,10 +53,6 @@ void kmain(stivale2_struct* bootinfo)
 
     // initialize multitasking
     task_init();
-
-    // test multitasking
-    task_create(task1);
-    task_create(task2);
 
     while (true)
         ;
