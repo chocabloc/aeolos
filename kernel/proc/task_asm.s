@@ -1,7 +1,7 @@
 .global init_context_switch
 .global finish_context_switch
 
-.extern do_context_switch
+.extern _do_context_switch
 
 init_context_switch:
     push %rax
@@ -21,7 +21,11 @@ init_context_switch:
     push %r15
 
     mov %rsp, %rdi
-    call do_context_switch
+    call _do_context_switch
+
+    // context switch failed for whatever reason, clean up and return
+    add $120, %rsp
+    iretq
 
 finish_context_switch:
     mov (%rdi), %rsp
