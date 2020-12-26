@@ -23,10 +23,10 @@ extern void finish_context_switch(task_t* nexttask);
 // trigger an apic timer interrupt
 static void reschedule()
 {
-    asm volatile("movq $interrupt, %%rax;"
+    asm volatile("movq 1f, %%rax;"
                  "movb %0, %%bl;"
                  "movb %%bl, 1(%%rax);"
-                 "interrupt: int $0"
+                 "1: int $0"
                  :
                  : "g"(apic_timer_get_vector())
                  : "bl", "rax");
