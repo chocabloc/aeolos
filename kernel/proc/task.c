@@ -1,12 +1,15 @@
 #include "task.h"
 #include "kconio.h"
 #include "kmalloc.h"
+#include "lock.h"
 #include "sys/apic/apic.h"
 #include "sys/apic/timer.h"
 #include "sys/cpu/cpu.h"
 #include "sys/panic.h"
 #include <stdbool.h>
 #include <stddef.h>
+
+spinlock_t sched_lock = 0;
 
 // task lists for high, medium, and low priority tasks
 static tasklist_t tlists[3] = { { .head = NULL, .current = NULL, .tail = NULL } };
@@ -34,6 +37,9 @@ static void reschedule()
 
 void _do_context_switch(task_state_t* currentstate)
 {
+    if (!spinlock_try_take(&sched_lock))
+        return;
+
     static uint64_t nticks = 4;
 
     tasklist_t* l; // list from which to take next task
@@ -66,6 +72,7 @@ void _do_context_switch(task_state_t* currentstate)
 
     // send an EOI, so that we continue to receive timer interrupts
     apic_send_eoi();
+    spinlock_release(&sched_lock);
 
     // switch to next task
     finish_context_switch(curr_task);
@@ -73,6 +80,8 @@ void _do_context_switch(task_state_t* currentstate)
 
 tid_t task_create(void (*entrypoint)(tid_t), priority_t priority)
 {
+    spinlock_take(&sched_lock);
+
     // could not allocate a tid or invalid priority
     if (!curr_tid || priority > PRIORITY_MAX)
         return -1;
@@ -108,8 +117,9 @@ tid_t task_create(void (*entrypoint)(tid_t), priority_t priority)
         tlists[priority].current = ntask;
     }
     tlists[priority].tail = ntask;
-
     curr_tid++;
+    spinlock_release(&sched_lock);
+
     return ntask->tid;
 }
 
@@ -118,6 +128,8 @@ bool task_destroy(uint64_t tid)
     // since tid 0 is reserved
     if (!tid)
         goto failed;
+
+    spinlock_take(&sched_lock);
 
     // is the task to be deleted the currently running task
     bool isrunning = (curr_task->tid == tid);
@@ -161,11 +173,13 @@ bool task_destroy(uint64_t tid)
                      */
                     if (isrunning) {
                         curr_task = NULL;
+                        spinlock_release(&sched_lock);
                         while (true)
                             ;
                     }
                 }
 
+                spinlock_release(&sched_lock);
                 return true;
             }
             t = t->next;
@@ -173,6 +187,7 @@ bool task_destroy(uint64_t tid)
     }
 
 failed:
+    spinlock_release(&sched_lock);
     kdbg_warn("task_destroy(): Invalid tid %d\n", tid);
     return false;
 }
