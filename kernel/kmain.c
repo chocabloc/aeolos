@@ -17,6 +17,13 @@
 extern uint8_t kernel_start;
 extern uint8_t kernel_end;
 
+// first task to be executed
+void kinit(tid_t tid)
+{
+    kdbg_ok("Multitasking initialized. First kernel task started :)\n");
+    task_destroy(tid);
+}
+
 void kmain(stivale2_struct* bootinfo)
 {
     // convert the physical address to a virtual one, since we will be removing identity mapping later
@@ -52,7 +59,9 @@ void kmain(stivale2_struct* bootinfo)
     pmm_reclaim_bootloader_mem();
 
     // initialize multitasking
-    task_init();
+    task_init(kinit);
+
+    // DO NOT put anything here. Put it in kinit() instead
 
     while (true)
         ;
