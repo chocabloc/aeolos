@@ -115,8 +115,6 @@ tid_t task_create(void (*entrypoint)(tid_t), priority_t priority)
 
 bool task_destroy(uint64_t tid)
 {
-    kdbg_info("Destroying task %d\n", tid);
-
     // since tid 0 is reserved
     if (!tid)
         goto failed;
@@ -157,12 +155,11 @@ bool task_destroy(uint64_t tid)
                 // if it is the current task in the list, set current task to null
                 if (iscurrentinlist) {
                     tlists[prt].current = NULL;
-                    kdbg_info("Current in list\n");
+
                     /* if the task to be deleted is the currently running task, we can't return.
                      * so go into an infinite loop
                      */
                     if (isrunning) {
-                        kdbg_info("running\n");
                         curr_task = NULL;
                         while (true)
                             ;
