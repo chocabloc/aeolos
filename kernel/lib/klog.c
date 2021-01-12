@@ -144,7 +144,9 @@ void klog_printf(const char* s, ...)
 
 void klog_ok(const char* s, ...)
 {
+    term_setfgcolor(TERM_COLOR_LTGREEN);
     klog_puts("[OKAY] ");
+    term_setfgcolor(TERM_COLOR_GRAY);
 
     va_list args;
     va_start(args, s);
@@ -154,7 +156,9 @@ void klog_ok(const char* s, ...)
 
 void klog_info(const char* s, ...)
 {
+    term_setfgcolor(TERM_COLOR_LTBLUE);
     klog_puts("[INFO] ");
+    term_setfgcolor(TERM_COLOR_GRAY);
 
     va_list args;
     va_start(args, s);
@@ -164,7 +168,9 @@ void klog_info(const char* s, ...)
 
 void klog_err(const char* s, ...)
 {
+    term_setfgcolor(TERM_COLOR_LTRED);
     klog_puts("[ERROR] ");
+    term_setfgcolor(TERM_COLOR_GRAY);
 
     va_list args;
     va_start(args, s);
@@ -174,7 +180,9 @@ void klog_err(const char* s, ...)
 
 void klog_warn(const char* s, ...)
 {
+    term_setfgcolor(TERM_COLOR_ORANGE);
     klog_puts("[WARNING] ");
+    term_setfgcolor(TERM_COLOR_GRAY);
 
     va_list args;
     va_start(args, s);
