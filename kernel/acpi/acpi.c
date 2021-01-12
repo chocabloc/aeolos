@@ -1,5 +1,5 @@
 #include "acpi.h"
-#include "kconio.h"
+#include "klog.h"
 #include "madt.h"
 #include "memutils.h"
 #include "mm/vmm.h"
@@ -18,7 +18,7 @@ acpi_sdt* acpi_get_sdt(const char* sign)
         for (uint64_t i = 0; i < len; i++) {
             acpi_sdt* table = (acpi_sdt*)PHYS_TO_VIRT(((uint64_t*)xsdt->data)[i]);
             if (memcmp(table->hdr.sign, sign, sizeof(table->hdr.sign))) {
-                kdbg_info("Found ACPI SDT \"%s\"\n", sign);
+                klog_info("Found ACPI SDT \"%s\"\n", sign);
                 return table;
             }
         }
@@ -27,13 +27,13 @@ acpi_sdt* acpi_get_sdt(const char* sign)
         for (uint64_t i = 0; i < len; i++) {
             acpi_sdt* table = (acpi_sdt*)PHYS_TO_VIRT(((uint32_t*)rsdt->data)[i]);
             if (memcmp(table->hdr.sign, sign, sizeof(table->hdr.sign))) {
-                kdbg_info("Found ACPI SDT \"%s\"\n", sign);
+                klog_info("Found ACPI SDT \"%s\"\n", sign);
                 return table;
             }
         }
     }
 
-    kdbg_warn("ACPI SDT \"%s\" not found.\n", sign);
+    klog_warn("ACPI SDT \"%s\" not found.\n", sign);
     return NULL;
 }
 
@@ -42,14 +42,14 @@ void acpi_init(stv2_struct_tag_rsdp* rsdp_info)
     rsdp_t* rsdp = (rsdp_t*)PHYS_TO_VIRT(rsdp_info->rsdp);
 
     if (rsdp->revision == 2) {
-        kdbg_info("ACPI v2.0 detected\n");
+        klog_info("ACPI v2.0 detected\n");
         xsdt = (acpi_sdt*)PHYS_TO_VIRT(rsdp->xsdt_addr);
         xsdt_present = true;
     } else {
-        kdbg_info("ACPI v1.0 detected\n");
+        klog_info("ACPI v1.0 detected\n");
         rsdt = (acpi_sdt*)PHYS_TO_VIRT(rsdp->rsdt_addr);
         xsdt_present = false;
     }
 
-    kdbg_ok("ACPI tables initialized\n");
+    klog_ok("ACPI tables initialized\n");
 }

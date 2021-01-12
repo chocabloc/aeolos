@@ -1,6 +1,6 @@
 #include "cpu.h"
 #include "cpuid.h"
-#include "kconio.h"
+#include "klog.h"
 
 uint64_t rdmsr(uint32_t msr)
 {
@@ -36,16 +36,16 @@ void wrmsr(uint32_t msr, uint64_t val)
 // enable cpu features like sse2
 void cpu_features_init()
 {
-    kdbg_info("CPU Information: \n");
+    klog_info("CPU Information: \n");
 
     char vendor[13];
     cpuid_get_vendor(vendor);
-    kprintf(" \tVendor: %s\n", vendor);
-    kprintf(" \tSSE1: %b\n", cpuid_check_feature(CPUID_FEATURE_SSE1));
-    kprintf(" \tSSE2: %b\n", cpuid_check_feature(CPUID_FEATURE_SSE2));
-    kprintf(" \tSSE3: %b\n", cpuid_check_feature(CPUID_FEATURE_SSE3));
-    kprintf(" \tAVX:  %b\n", cpuid_check_feature(CPUID_FEATURE_AVX));
-    kprintf(" \tAVX2: %b\n", cpuid_check_feature(CPUID_FEATURE_AVX2));
+    klog_printf(" \tVendor: %s\n", vendor);
+    klog_printf(" \tSSE1: %b\n", cpuid_check_feature(CPUID_FEATURE_SSE1));
+    klog_printf(" \tSSE2: %b\n", cpuid_check_feature(CPUID_FEATURE_SSE2));
+    klog_printf(" \tSSE3: %b\n", cpuid_check_feature(CPUID_FEATURE_SSE3));
+    klog_printf(" \tAVX:  %b\n", cpuid_check_feature(CPUID_FEATURE_AVX));
+    klog_printf(" \tAVX2: %b\n", cpuid_check_feature(CPUID_FEATURE_AVX2));
 
     // clear the CR0.EM bit and set the CR0.MP bit
     uint64_t vcr0;
@@ -63,5 +63,5 @@ void cpu_features_init()
 
     // we do not have any support for saving state yet :(
 
-    kdbg_ok("CPU features initialized\n");
+    klog_ok("CPU features initialized\n");
 }

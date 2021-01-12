@@ -1,7 +1,7 @@
 #include "apic.h"
 #include "acpi/acpi.h"
 #include "acpi/madt.h"
-#include "kconio.h"
+#include "klog.h"
 #include "mm/vmm.h"
 #include "sys/cpu/cpu.h"
 #include "timer.h"
@@ -30,5 +30,5 @@ void apic_init()
     vmm_map((uint64_t)lapic_base, VIRT_TO_PHYS(lapic_base), 1, FLAG_DEFAULT);
 
     apic_timer_init();
-    kdbg_ok("APIC Initialized\n");
+    klog_ok("APIC Initialized\n");
 }

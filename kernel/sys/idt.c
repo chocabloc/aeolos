@@ -1,6 +1,7 @@
 #include "idt.h"
 #include "isrs.h"
 #include "panic.h"
+#include "klog.h"
 #include <stdint.h>
 
 static struct idt_entry IDT[256];
@@ -61,4 +62,5 @@ void idt_init()
     struct idtr i = { .limit = sizeof(IDT) - 1, .base = (uint64_t)&IDT };
 
     idt_load(&i);
+    klog_ok("IDT initialized\n");
 }

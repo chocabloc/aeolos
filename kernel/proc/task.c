@@ -1,5 +1,5 @@
 #include "task.h"
-#include "kconio.h"
+#include "klog.h"
 #include "kmalloc.h"
 #include "lock.h"
 #include "sys/apic/apic.h"
@@ -188,7 +188,7 @@ bool task_destroy(uint64_t tid)
 
 failed:
     spinlock_release(&sched_lock);
-    kdbg_warn("task_destroy(): Invalid tid %d\n", tid);
+    klog_warn("task_destroy(): Invalid tid %d\n", tid);
     return false;
 }
 

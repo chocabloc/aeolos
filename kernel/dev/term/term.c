@@ -1,7 +1,7 @@
 #include "term.h"
 #include "boot/stivale2.h"
 #include "dev/fb/fb.h"
-#include "kconio.h"
+#include "klog.h"
 #include "memutils.h"
 #include <stddef.h>
 
@@ -17,6 +17,9 @@ static uint32_t cursor_x, cursor_y;
 
 // width and height of framebuffer in characters
 static uint32_t term_width, term_height;
+
+// is the terminal ready
+static bool ready = false;
 
 // scroll the screen one line up
 static void scroll()
@@ -100,40 +103,6 @@ void term_puts(const char* s)
         term_putchar(s[i]);
 }
 
-// print number as 64-bit hex
-void term_puthex(uint64_t n)
-{
-    term_puts("0x");
-    for (int i = 60; i >= 0; i -= 4) {
-        uint64_t digit = (n >> i) & 0xF;
-        term_putchar((digit <= 9) ? (digit + '0') : (digit - 10 + 'A'));
-    }
-}
-
-// print number
-void term_putint(int n)
-{
-    if (n == 0) {
-        term_putchar('0');
-        return;
-    }
-    if (n < 0) {
-        term_putchar('-');
-        n = -n;
-    }
-    size_t div = 1;
-    int temp = n;
-    while (temp > 0) {
-        temp /= 10;
-        div *= 10;
-    }
-    while (div >= 10) {
-        int digit = ((n % div) - (n % (div / 10))) / (div / 10);
-        div /= 10;
-        term_putchar(digit + '0');
-    }
-}
-
 // initialize the terminal
 void term_init()
 {
@@ -141,6 +110,11 @@ void term_init()
 
     term_width = fb->width / term_font.width;
     term_height = fb->height / term_font.height;
+
+    term_clear();
+    term_flush();
+
+    ready = true;
 }
 
 void term_setfgcolor(uint32_t color)
@@ -151,4 +125,9 @@ void term_setfgcolor(uint32_t color)
 void term_setbgcolor(uint32_t color)
 {
     bgcolor = color;
+}
+
+bool term_isready()
+{
+    return ready;
 }

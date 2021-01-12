@@ -1,6 +1,6 @@
 #include "panic.h"
+#include "klog.h"
 #include "dev/term/term.h"
-#include "kconio.h"
 #include "symbols.h"
 #include <stdarg.h>
 #include <stdbool.h>
@@ -25,33 +25,36 @@ static void do_stacktrace()
     asm volatile("movq %%rbp, %0"
                  : "=rm"(rbp_val));
 
-    kprintf("\nStack Trace:\n");
+    klog_printf("\nStack Trace:\n");
     for (int i = 0;; i++) {
-        kprintf(" \t%d: ", i);
+        klog_printf(" \t%d: ", i);
         if ((void*)rbp_val < &kernel_start || (void*)rbp_val >= &kernel_end) {
-            kprintf("\t<Invalid Base Pointer>");
+            klog_printf("\t<Invalid Base Pointer>");
             break;
         }
         uint64_t func_addr = *(rbp_val + 1);
-        kprintf("\t%x (%s)\n", func_addr, symtab_get_func(func_addr));
+        klog_printf("\t%x (%s)\n", func_addr, symtab_get_func(func_addr));
         rbp_val = (uint64_t*)*rbp_val;
     }
 }
 
 __attribute__((noreturn)) void kernel_panic(const char* s, ...)
 {
-    term_setfgcolor(TERM_COLOR_RED);
-    term_puts("[PANIC] ");
+    asm volatile("cli");
 
-    term_setfgcolor(TERM_COLOR_WHITE);
+    // show on screen if terminal is ready
+    if (term_isready())
+        klog_show();
+
+    klog_puts("[PANIC] ");
+
     va_list args;
     va_start(args, s);
-    kvprintf(s, args);
+    klog_vprintf(s, args);
     va_end(args);
 
     do_stacktrace();
 
-    asm volatile("cli");
     while (true)
         asm volatile("hlt");
 }

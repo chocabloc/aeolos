@@ -2,6 +2,7 @@
 
 #include "boot/stivale2.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 #define TERM_COLOR_BLACK 0x000000
 #define TERM_COLOR_WHITE 0xffffff
@@ -32,11 +33,10 @@ typedef struct PSF_font {
 } PSF_font;
 
 void term_init();
+bool term_isready();
 
 void term_putchar(uint8_t c);
 void term_puts(const char* s);
-void term_puthex(uint64_t n);
-void term_putint(int n);
 
 void term_setfgcolor(uint32_t color);
 void term_setbgcolor(uint32_t color);

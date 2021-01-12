@@ -1,6 +1,6 @@
 #include "timer.h"
 #include "apic.h"
-#include "kconio.h"
+#include "klog.h"
 #include "sys/cpu/cpu.h"
 #include "sys/idt.h"
 #include <stdbool.h>
@@ -13,7 +13,7 @@ static uint8_t vector;
 // a dummy handler, just sends eoi
 __attribute__((interrupt)) static void apic_timer_handler(void* v __attribute__((unused)))
 {
-    kdbg_warn("APIC Timer: No handler registered\n");
+    klog_warn("APIC Timer: No handler registered\n");
     apic_send_eoi();
 }
 
@@ -92,6 +92,6 @@ void apic_timer_init()
     // now calculate the base frequency
     base_freq = (double)(UINT32_MAX - apic_read_reg(APIC_REG_TIMER_CCR)) * 18.2779 * divisor;
 
-    kdbg_info("APIC Timer base frequency: %d Hz. Divisor: 4.\n", base_freq);
-    kdbg_ok("APIC Timer initialized\n");
+    klog_info("APIC Timer base frequency: %d Hz. Divisor: 4.\n", base_freq);
+    klog_ok("APIC Timer initialized\n");
 }

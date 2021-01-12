@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "klog.h"
 #include <stdint.h>
 
 static const uint64_t GDT[3] = { GDT_ENTRY_NULL, GDT_ENTRY_CODE, GDT_ENTRY_DATA };
@@ -24,4 +25,6 @@ void gdt_init()
                  :
                  : "g"(g)
                  :);
+
+    klog_ok("GDT initialized\n");
 }

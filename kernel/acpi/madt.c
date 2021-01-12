@@ -1,5 +1,5 @@
 #include "madt.h"
-#include "kconio.h"
+#include "klog.h"
 #include "sys/panic.h"
 
 static madt_t* madt;
