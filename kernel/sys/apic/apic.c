@@ -10,12 +10,12 @@ static void* lapic_base;
 
 uint32_t apic_read_reg(uint16_t offset)
 {
-    return *(uint32_t*)(lapic_base + offset);
+    return *(volatile uint32_t*)(lapic_base + offset);
 }
 
 void apic_write_reg(uint16_t offset, uint32_t val)
 {
-    *(uint32_t*)(lapic_base + offset) = val;
+    *(volatile uint32_t*)(lapic_base + offset) = val;
 }
 
 void apic_send_eoi()
