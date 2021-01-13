@@ -90,7 +90,7 @@ void apic_timer_init()
     }
 
     // now calculate the base frequency
-    base_freq = (double)(UINT32_MAX - apic_read_reg(APIC_REG_TIMER_CCR)) * 18.2779 * divisor;
+    base_freq = (double)(UINT32_MAX - apic_read_reg(APIC_REG_TIMER_CCR)) * 18.277910539 * divisor;
 
     klog_info("APIC Timer base frequency: %d Hz. Divisor: 4.\n", base_freq);
     klog_ok("APIC Timer initialized\n");
