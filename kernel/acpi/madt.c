@@ -29,24 +29,29 @@ void madt_init()
     for (uint64_t i = 0; i < size;) {
         madt_record_hdr* rec = (madt_record_hdr*)(madt->records + i);
         switch (rec->type) {
+
         case MADT_RECORD_TYPE_LAPIC: {
+            // we support only 256 lapic's
+            if (num_lapic > 256)
+                break;
+
             madt_record_lapic* lapic = (madt_record_lapic*)rec;
             lapics[num_lapic++] = lapic;
-
-            if (num_lapic > 256)
-                kernel_panic("More than 256 LAPIC's found!");
         } break;
 
         case MADT_RECORD_TYPE_IOAPIC: {
+            // we support only 2 ioapic's
+            if (num_ioapic > 2)
+                break;
+
             madt_record_ioapic* ioapic = (madt_record_ioapic*)rec;
             io_apics[num_ioapic++] = ioapic;
-
-            if (num_ioapic > 4)
-                kernel_panic("More than 4 I/O APIC's found!");
         } break;
 
             // TODO: Handle MADT_RECORD_TYPE_ISO and MADT_RECORD_TYPE_NMI
         }
         i += rec->len;
     }
+
+    klog_ok("MADT initialized\n");
 }

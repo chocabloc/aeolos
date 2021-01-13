@@ -51,5 +51,6 @@ void acpi_init(stv2_struct_tag_rsdp* rsdp_info)
         xsdt_present = false;
     }
 
+    madt_init();
     klog_ok("ACPI tables initialized\n");
 }

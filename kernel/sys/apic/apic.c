@@ -5,8 +5,14 @@
 #include "mm/vmm.h"
 #include "sys/cpu/cpu.h"
 #include "timer.h"
+#include "sys/idt.h"
 
 static void* lapic_base;
+
+__attribute__((interrupt)) static void spurious_int_handler(void* v __attribute__((unused)))
+{
+    klog_info("APIC spurious interrupt recieved");
+}
 
 uint32_t apic_read_reg(uint16_t offset)
 {
@@ -23,12 +29,23 @@ void apic_send_eoi()
     apic_write_reg(APIC_REG_EOI, 1);
 }
 
+// send an ipi to a processor
+void apic_send_ipi(uint8_t dest, uint8_t vector, uint32_t mtype)
+{
+    apic_write_reg(APIC_REG_ICR_HIGH, (uint32_t)dest << 24);
+    apic_write_reg(APIC_REG_ICR_LOW, (mtype << 8) | vector);
+}
+
 void apic_init()
 {
-    madt_init();
     lapic_base = (void*)PHYS_TO_VIRT(madt_get_lapic_base());
-    vmm_map((uint64_t)lapic_base, VIRT_TO_PHYS(lapic_base), 1, FLAG_DEFAULT);
+    vmm_map((uint64_t)lapic_base, VIRT_TO_PHYS(lapic_base), 1, FLAG_PRESENT | FLAG_READWRITE | FLAG_CACHE_DISABLE);
 
+    // initialize the spurious interrupt register
+    idt_set_handler(APIC_SPURIOUS_VECTOR_NUM, spurious_int_handler);
+    apic_write_reg(APIC_REG_SPURIOUS_INT, APIC_FLAG_ENABLE | APIC_SPURIOUS_VECTOR_NUM);
+
+    // initialize the apic timer
     apic_timer_init();
     klog_ok("APIC Initialized\n");
 }
