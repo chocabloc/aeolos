@@ -9,6 +9,7 @@
 #include "proc/task.h"
 #include "sys/apic/apic.h"
 #include "sys/cpu/cpu.h"
+#include "sys/smp/smp.h"
 #include "sys/gdt.h"
 #include "sys/idt.h"
 #include <stdbool.h>
@@ -58,6 +59,7 @@ void kmain(stivale2_struct* bootinfo)
     // parse acpi tables
     acpi_init((stv2_struct_tag_rsdp*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_RSDP_ID));
     apic_init();
+    smp_init();
 
     // since we do not need the bootloader info anymore
     pmm_reclaim_bootloader_mem();

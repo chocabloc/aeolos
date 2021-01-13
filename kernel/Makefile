@@ -1,7 +1,7 @@
 KERNELFILE = kernel.elf
 LINKSCRIPT = linker.ld
 
-CFILES = $(wildcard *.c boot/*.c dev/term/*.c dev/fb/*.c proc/*.c sys/*.c sys/cpu/*.c sys/apic/*.c acpi/*.c mm/*.c lib/*.c)
+CFILES = $(wildcard *.c boot/*.c dev/term/*.c dev/fb/*.c proc/*.c sys/*.c sys/cpu/*.c sys/apic/*.c sys/smp/*.c acpi/*.c mm/*.c lib/*.c)
 ASMFILES = $(wildcard *.s boot/*.s dev/term/*.s sys/*.s proc/*.s)
 
 COBJS = $(patsubst %.c, %.o, $(CFILES))
