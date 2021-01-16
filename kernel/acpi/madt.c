@@ -31,8 +31,8 @@ void madt_init()
         switch (rec->type) {
 
         case MADT_RECORD_TYPE_LAPIC: {
-            // we support only 256 lapic's
-            if (num_lapic > 256)
+            // we support only 255 cpu's
+            if (num_lapic > 255)
                 break;
 
             madt_record_lapic* lapic = (madt_record_lapic*)rec;

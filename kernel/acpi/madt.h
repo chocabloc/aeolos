@@ -62,6 +62,9 @@ typedef struct {
 #define MADT_RECORD_TYPE_NMI 4
 #define MADT_RECORD_TYPE_LAPIC_AO 5
 
+#define MADT_LAPIC_FLAG_ENABLED 1 << 0
+#define MADT_LAPIC_FLAG_ONLINE_CAPABLE 1 << 1
+
 void madt_init();
 uint32_t madt_get_num_ioapic();
 uint32_t madt_get_num_lapic();
