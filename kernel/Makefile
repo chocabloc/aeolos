@@ -1,20 +1,22 @@
-KERNELFILE = kernel.elf
+# source files
 LINKSCRIPT = linker.ld
+CFILES = $(shell find . -name "*.c")
+ASMFILES = $(shell find . -name "*.s")
+TRAMPOLINEFILE = sys/smp/trampoline.nasm
 
-CFILES = $(wildcard *.c boot/*.c dev/term/*.c dev/fb/*.c proc/*.c sys/*.c sys/cpu/*.c sys/apic/*.c sys/smp/*.c acpi/*.c mm/*.c lib/*.c)
-ASMFILES = $(wildcard *.s boot/*.s dev/term/*.s sys/*.s proc/*.s)
+# object files
+COBJS = $(CFILES:.c=.o)
+ASMOBJS = $(ASMFILES:.s=.o)
+OBJS = $(COBJS) $(ASMOBJS)
+SYMBOLS = _symbols.o
+KERNELOBJ = kernel.elf
+TRAMPOLINEBLOB = sys/smp/trampoline.bin
 
-COBJS = $(patsubst %.c, %.o, $(CFILES))
-ASMOBJS = $(patsubst %.s, %.o, $(ASMFILES))
-
-SYMBOLFILE = _symbols.c
-SYMBOLOBJ = _symbols.o
-
+# toolchain flags and settings
 CC = clang
-LD = clang
+LD = ld
 AS = clang
-GENSYM = ./gensym
-
+NASM = nasm
 CFLAGS = -ffreestanding \
 		 -mcmodel=kernel \
 		 -mno-red-zone \
@@ -27,31 +29,42 @@ CFLAGS = -ffreestanding \
 		 -fno-omit-frame-pointer \
 		 -I . \
 		 -I lib
-
 ASFLAGS = -I .
-LINKFLAGS = -Wl,-T$(LINKSCRIPT) -nostdlib
+LINKFLAGS = -T$(LINKSCRIPT) -nostdlib
 
+# rules
 .PHONY: clean kernel
 
-kernel: $(KERNELFILE)
-	
-$(KERNELFILE): $(COBJS) $(ASMOBJS)
+kernel: $(KERNELOBJ)
+
+# link, then generate symbols, and then link again	
+$(KERNELOBJ): $(TRAMPOLINEBLOB) $(OBJS) 
 	@echo Linking all objects...
-	@$(LD) -o $@ $^ $(LINKFLAGS) && \
-	echo "Generating symbols..." && \
-	./$(GENSYM) $@ && \
-	$(CC) -o $(SYMBOLOBJ) -c $(SYMBOLFILE) $(CFLAGS) && \
-	echo "Linking symbols..." && \
-	$(LD) -o $(KERNELFILE) $(SYMBOLOBJ) $(filter-out $(SYMBOLOBJ), $^) $(LINKFLAGS)
+	@$(LD) $(LINKFLAGS) $(OBJS) -o $@ 
+
+	@echo "Generating symbols..."
+	@./gensym $@
+	@$(CC) $(CFLAGS) -x c -c _symbols.gen -o _symbols.o
+
+	@echo "Linking symbols..."
+	@$(LD) $(LINKFLAGS) $(OBJS) _symbols.o -o $@ 
 	
+# build c objects
 $(COBJS): %.o: %.c
 	@echo Compiling $^ ...
 	@$(CC) -o $@ -c $^ $(CFLAGS)
 
+# build assembly objects
 $(ASMOBJS): %.o: %.s
 	@echo Compiling $^ ...
 	@$(AS) -o $@ -c $^ $(ASFLAGS)
 
+# build the trampoline blob
+$(TRAMPOLINEBLOB): $(TRAMPOLINEFILE)
+	@echo Compiling $^
+	@$(NASM) $^ -o $@
+
+# clean
 clean: 
 	@echo Cleaning...
-	@rm -f $(COBJS) $(ASMOBJS) $(KERNELFILE)
+	@rm -f $(OBJS) $(KERNELOBJ) _symbols.gen
