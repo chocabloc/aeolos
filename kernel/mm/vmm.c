@@ -75,6 +75,9 @@ void vmm_init()
     patval |= 0b001ULL << 32;
     wrmsr(MSR_PAT, patval);
 
+    klog_info("Identity mapping first 1MB of memory...\n");
+    vmm_map(0, 0, NUM_PAGES(0x100000), FLAG_DEFAULT);
+
     klog_info("Mapping lower 2GB of memory to 0xFFFFFFFF80000000...\n");
     vmm_map(HIGHERHALF_OFFSET, 0, NUM_PAGES(0x80000000), FLAG_DEFAULT);
 

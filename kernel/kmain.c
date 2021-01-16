@@ -9,9 +9,9 @@
 #include "proc/task.h"
 #include "sys/apic/apic.h"
 #include "sys/cpu/cpu.h"
-#include "sys/smp/smp.h"
 #include "sys/gdt.h"
 #include "sys/idt.h"
+#include "sys/smp/smp.h"
 #include <stdbool.h>
 #include <stddef.h>
 
