@@ -14,7 +14,7 @@ TRAMPOLINEBLOB = sys/smp/trampoline.bin
 
 # toolchain flags and settings
 CC = clang
-LD = ld
+LD = clang
 AS = clang
 NASM = nasm
 CFLAGS = -ffreestanding \
@@ -30,7 +30,7 @@ CFLAGS = -ffreestanding \
 		 -I . \
 		 -I lib
 ASFLAGS = -I .
-LINKFLAGS = -T$(LINKSCRIPT) -nostdlib
+LINKFLAGS = -Wl,-T$(LINKSCRIPT) -nostdlib -z max-page-size=0x1000
 
 # rules
 .PHONY: clean kernel
