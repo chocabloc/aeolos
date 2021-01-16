@@ -44,20 +44,23 @@ void smp_init()
     for (uint64_t i = 0; i < cpunum; i++) {
         int counter_prev = *ap_boot_counter, counter_curr = counter_prev;
 
+        // if cpu is not online capable, do not initialize it
+        if (!(lapics[i]->flags & MADT_LAPIC_FLAG_ONLINE_CAPABLE)
+            && !(lapics[i]->flags & MADT_LAPIC_FLAG_ENABLED)) {
+            klog_info("CPU %d is not enabled or online capable\n", lapics[i]->proc_id);
+            continue;
+        }
+
         // if cpu is the bootstrap processor, do not initialize it
         if (apic_read_reg(APIC_REG_ID) == lapics[i]->apic_id) {
-            klog_info("CPU %d is BSP\n", lapics[i]->apic_id);
-            info.bsp = lapics[i]->apic_id;
+            klog_info("CPU %d is BSP\n", lapics[i]->proc_id);
+            info.cpus[info.num_cpus].is_bsp = true;
+            info.cpus[info.num_cpus].lapic_id = lapics[i]->apic_id;
+            info.num_cpus++;
             continue;
         }
 
-        // if cpu is not online capable, do not initialize it
-        if (!(lapics[i]->flags | MADT_LAPIC_FLAG_ONLINE_CAPABLE)) {
-            klog_info("CPU %d is not online capable\n", lapics[i]->apic_id);
-            continue;
-        }
-
-        klog_info("Initializing CPU %d...", lapics[i]->apic_id);
+        klog_info("Initializing CPU %d...", lapics[i]->proc_id);
 
         // send the init ipi
         apic_send_ipi(lapics[i]->apic_id, 0, APIC_IPI_TYPE_INIT);
@@ -85,11 +88,12 @@ void smp_init()
         if (!success) {
             klog_printf(" Failed\n");
         } else {
-            info.ap[info.num_ap] = lapics[i]->apic_id;
-            info.num_ap++;
+            info.cpus[info.num_cpus].is_bsp = false;
+            info.cpus[info.num_cpus].lapic_id = lapics[i]->apic_id;
+            info.num_cpus++;
             klog_printf(" Done\n");
         }
     }
 
-    klog_ok("SMP initialized. %d processors started\n", info.num_ap);
+    klog_ok("SMP initialized. %d processors detected\n", info.num_cpus);
 }
