@@ -1,11 +1,11 @@
 #include "apic.h"
-#include "acpi/acpi.h"
-#include "acpi/madt.h"
+#include "../acpi/acpi.h"
+#include "../acpi/madt.h"
 #include "klog.h"
 #include "mm/vmm.h"
 #include "sys/cpu/cpu.h"
-#include "timer.h"
 #include "sys/idt.h"
+#include "timer.h"
 
 static void* lapic_base;
 

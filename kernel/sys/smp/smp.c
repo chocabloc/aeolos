@@ -1,5 +1,5 @@
 #include "smp.h"
-#include "acpi/madt.h"
+#include "../acpi/madt.h"
 #include "klog.h"
 #include "memutils.h"
 #include "mm/pmm.h"

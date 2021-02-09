@@ -1,8 +1,7 @@
 #include "fb.h"
 #include "kmalloc.h"
 #include "memutils.h"
-#include "mm/vmm.h"
-#include "mm/pmm.h"
+#include "mm/mm.h"
 #include <stdbool.h>
 
 static fb_info fb;
