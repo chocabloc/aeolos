@@ -50,14 +50,6 @@ typedef struct task_t {
     struct task_t* prev;
 } task_t;
 
-// doubly linked list of tasks
-typedef struct
-{
-    task_t* head;
-    task_t* current;
-    task_t* tail;
-} tasklist_t;
-
 void task_init();
 tid_t task_create(void (*entrypoint)(tid_t), priority_t priority);
 bool task_destroy(uint64_t tid);
