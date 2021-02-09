@@ -1,11 +1,11 @@
 #include "panic.h"
+#include "dev/term/term.h"
 #include "klog.h"
 #include "lock.h"
-#include "dev/term/term.h"
 #include "symbols.h"
-#include <stddef.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 extern void kernel_start;
 extern void kernel_end;
@@ -34,11 +34,12 @@ static void do_stacktrace()
         klog_printf(" \t%d: ", i);
         uint64_t func_addr = *(rbp_val + 1);
         const char* func_name = symtab_get_func(func_addr);
+        klog_printf("\t%x", func_addr);
         if (!func_name) {
-            klog_printf("\t<Unknown Function>");
+            klog_printf(" (Unknown Function)");
             break;
         }
-        klog_printf("\t%x (%s)\n", func_addr, func_name);
+        klog_printf(" (%s)\n", func_name);
         rbp_val = (uint64_t*)*rbp_val;
     }
 }

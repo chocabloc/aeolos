@@ -11,6 +11,7 @@
 #include "sys/cpu/cpu.h"
 #include "sys/gdt.h"
 #include "sys/idt.h"
+#include "sys/panic.h"
 #include "sys/smp/smp.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -22,8 +23,7 @@ extern uint8_t kernel_end;
 void kinit(tid_t tid)
 {
     klog_ok("Multitasking initialized. First kernel task started :)\n");
-    *((uint32_t*)0x400000000) = 1234;
-    task_destroy(tid);
+    kernel_panic("This OS is a work in progress\n");
 }
 
 void kmain(stivale2_struct* bootinfo)

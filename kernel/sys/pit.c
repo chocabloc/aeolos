@@ -3,7 +3,6 @@
 #include "sys/cpu/cpu.h"
 #include <stdbool.h>
 
-#define TICK_LEN 0x04a9
 
 void pit_wait(uint64_t ms)
 {
