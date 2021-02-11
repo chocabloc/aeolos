@@ -6,7 +6,7 @@ A little x86_64 hobby OS
 * Physical Memory Manager
 * Virtual Memory Manager
 * APIC Timer
-* Simple Multitasking
+* Multitasking with SMP
 
 ### Things not yet complete:
 * User Mode
