@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-static spinlock_t log_lock;
-
 // ring buffer for kernel log
 static uint8_t log_buff[16384];
 static uint16_t log_start = 0;
