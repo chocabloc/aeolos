@@ -13,9 +13,9 @@ KERNELOBJ = kernel.elf
 TRAMPOLINEBLOB = sys/smp/trampoline.bin
 
 # toolchain flags and settings
-CC = clang
-LD = clang
-AS = clang
+CC = clang-10
+LD = clang-10
+AS = clang-10
 NASM = nasm
 CFLAGS = -ffreestanding \
 		 -mcmodel=kernel \
