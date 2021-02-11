@@ -1,12 +1,16 @@
 #include "smp.h"
 #include "../acpi/madt.h"
 #include "klog.h"
+#include "kmalloc.h"
 #include "memutils.h"
 #include "mm/pmm.h"
 #include "mm/vmm.h"
+#include "proc/sched/sched.h"
 #include "sys/apic/apic.h"
+#include "sys/apic/timer.h"
 #include "sys/cpu/cpu.h"
 #include "sys/pit.h"
+#include <stddef.h>
 
 // smp trampoline code to be executed by AP's
 extern void smp_trampoline_blob_start, smp_trampoline_blob_end;
@@ -21,7 +25,36 @@ const smp_info_t* smp_get_info()
     return &info;
 }
 
-void smp_init()
+const cpu_t* smp_get_current_info()
+{
+    return (cpu_t*)rdmsr(MSR_GS_BASE);
+}
+
+// AP's will run this code upon boot
+void smp_ap_entrypoint(cpu_t* cpuinfo)
+{
+    klog_printf(" Done\n");
+
+    // put cpu information in gs
+    wrmsr(MSR_GS_BASE, (uint64_t)cpuinfo);
+
+    // initialize cpu features
+    cpu_features_init();
+
+    // enable the apic
+    apic_enable();
+    apic_timer_init_ap();
+
+    // initialize scheduler
+    sched_init(NULL);
+
+    // wait for scheduler
+    asm volatile("sti");
+    while (true)
+        asm volatile("hlt");
+}
+
+static void prepare_trampoline()
 {
     // copy the trampoline blob to 0x1000 physical
     uint64_t trmpblobsize = (uint64_t)&smp_trampoline_blob_end - (uint64_t)&smp_trampoline_blob_start;
@@ -34,6 +67,12 @@ void smp_init()
                  : "=m"(*(uint64_t*)PHYS_TO_VIRT(SMP_TRAMPOLINE_ARG_IDTPTR))
                  :
                  :);
+    *((uint64_t*)PHYS_TO_VIRT(SMP_TRAMPOLINE_ARG_ENTRYPOINT)) = (uint64_t)&smp_ap_entrypoint;
+}
+
+void smp_init()
+{
+    prepare_trampoline();
 
     // get lapic info from the madt
     uint64_t cpunum = madt_get_num_lapic();
@@ -51,30 +90,37 @@ void smp_init()
             continue;
         }
 
+        info.cpus[info.num_cpus].lapic_id = lapics[i]->apic_id;
+        info.cpus[info.num_cpus].cpu_id = info.num_cpus;
+
         // if cpu is the bootstrap processor, do not initialize it
         if (apic_read_reg(APIC_REG_ID) == lapics[i]->apic_id) {
             klog_info("CPU %d is BSP\n", lapics[i]->proc_id);
             info.cpus[info.num_cpus].is_bsp = true;
-            info.cpus[info.num_cpus].lapic_id = lapics[i]->apic_id;
+            wrmsr(MSR_GS_BASE, (uint64_t)&info.cpus[info.num_cpus]);
             info.num_cpus++;
             continue;
         }
 
         klog_info("Initializing CPU %d...", lapics[i]->proc_id);
 
+        // allocate and pass the stack
+        void* stack = kmalloc(PAGE_SIZE);
+        *((uint64_t*)PHYS_TO_VIRT(SMP_TRAMPOLINE_ARG_RSP)) = (uint64_t)stack + PAGE_SIZE;
+
+        // pass cpu information
+        *((uint64_t*)PHYS_TO_VIRT(SMP_TRAMPOLINE_ARG_CPUINFO)) = (uint64_t)&info.cpus[info.num_cpus];
+
         // send the init ipi
         apic_send_ipi(lapics[i]->apic_id, 0, APIC_IPI_TYPE_INIT);
         pit_wait(10);
 
         bool success = false;
-        // send startup ipi 2 times
-        for (int k = 0; k < 2; k++) {
+        for (int k = 0; k < 2; k++) { // send startup ipi 2 times
             apic_send_ipi(lapics[i]->apic_id, SMP_TRAMPOLINE_BLOB_ADDR / PAGE_SIZE, APIC_IPI_TYPE_STARTUP);
-
             // check if cpu has started
             for (int j = 0; j < 20; j++) {
                 counter_curr = *ap_boot_counter;
-
                 if (counter_curr != counter_prev) {
                     success = true;
                     break;
@@ -87,11 +133,10 @@ void smp_init()
 
         if (!success) {
             klog_printf(" Failed\n");
+            kmfree(stack, PAGE_SIZE);
         } else {
             info.cpus[info.num_cpus].is_bsp = false;
-            info.cpus[info.num_cpus].lapic_id = lapics[i]->apic_id;
             info.num_cpus++;
-            klog_printf(" Done\n");
         }
     }
 

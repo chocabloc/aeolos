@@ -1,7 +1,10 @@
 #include "klog.h"
 #include "dev/term/term.h"
+#include "lock.h"
 #include <stdbool.h>
 #include <stddef.h>
+
+static spinlock_t log_lock;
 
 // ring buffer for kernel log
 static uint8_t log_buff[16384];

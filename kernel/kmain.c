@@ -2,7 +2,7 @@
 #include "dev/term/term.h"
 #include "klog.h"
 #include "mm/mm.h"
-#include "proc/task.h"
+#include "proc/sched/sched.h"
 #include "sys/acpi/acpi.h"
 #include "sys/apic/apic.h"
 #include "sys/cpu/cpu.h"
@@ -19,8 +19,10 @@ extern uint8_t kernel_end;
 // first task to be executed
 void kinit(tid_t tid)
 {
-    klog_ok("Multitasking initialized. First kernel task started :)\n");
-    kernel_panic("This OS is a work in progress\n");
+    klog_ok("Multitasking initialized. First kernel task with tid %d started :)\n", tid);
+    klog_warn("This OS is a work in progress\n");
+    while (true)
+        ;
 }
 
 void kmain(stivale2_struct* bootinfo)
@@ -62,7 +64,7 @@ void kmain(stivale2_struct* bootinfo)
     pmm_reclaim_bootloader_mem();
 
     // initialize multitasking
-    task_init(kinit);
+    sched_init(kinit);
 
     // DO NOT put anything here. Put it in kinit() instead
 

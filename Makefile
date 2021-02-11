@@ -1,8 +1,7 @@
 GENIMG = ./genimg
 QEMU = qemu-system-x86_64
 
-QEMUFLAGS =	-bios /usr/share/ovmf/OVMF.fd \
-			-m 4096 \
+QEMUFLAGS =	-m 4096 \
 			-no-reboot \
 			-no-shutdown \
 			-enable-kvm \

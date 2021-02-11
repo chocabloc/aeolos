@@ -45,5 +45,5 @@ void fb_init(stv2_struct_tag_fb* t)
 // swap back and front buffers
 void fb_swap_buffers()
 {
-    memcpy_fast(backbuffer, fb.addr, fb.pitch * fb.height);
+    memcpy(backbuffer, fb.addr, fb.pitch * fb.height);
 }

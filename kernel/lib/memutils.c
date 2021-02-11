@@ -9,26 +9,6 @@ void memcpy(void* src, void* target, uint64_t len)
         t[i] = s[i];
 }
 
-// fast sse memcpy
-void memcpy_fast(void* src, void* target, uint64_t len)
-{
-    asm volatile("mov %[in], %%rax;"
-                 "mov %[out], %%rbx;"
-                 "mov %[len], %%rcx;"
-                 "mov %%rax, %%rdx;"
-                 "add %[len], %%rdx;"
-                 "0:"
-                 "movdqa (%%rax), %%xmm0;"
-                 "movdqa %%xmm0, (%%rbx);"
-                 "add $16, %%rax;"
-                 "add $16, %%rbx;"
-                 "cmp %%rax, %%rdx;"
-                 "jge 0b"
-                 : [ out ] "=g"(target)
-                 : [ in ] "g"(src), [ len ] "g"(len)
-                 : "xmm0", "rax", "rbx", "rcx", "rdx");
-}
-
 void memset(void* addr, uint8_t val, uint64_t len)
 {
     uint8_t* a = (uint8_t*)addr;

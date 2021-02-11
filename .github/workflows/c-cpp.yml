@@ -13,8 +13,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Install mtools
-      run: sudo apt-get install mtools
     - name: Install nasm
       run: sudo apt-get install nasm
     - name: make

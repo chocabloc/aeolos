@@ -36,6 +36,11 @@ void apic_send_ipi(uint8_t dest, uint8_t vector, uint32_t mtype)
     apic_write_reg(APIC_REG_ICR_LOW, (mtype << 8) | vector);
 }
 
+void apic_enable()
+{
+    apic_write_reg(APIC_REG_SPURIOUS_INT, APIC_FLAG_ENABLE | APIC_SPURIOUS_VECTOR_NUM);
+}
+
 void apic_init()
 {
     lapic_base = (void*)PHYS_TO_VIRT(madt_get_lapic_base());
@@ -43,7 +48,7 @@ void apic_init()
 
     // initialize the spurious interrupt register
     idt_set_handler(APIC_SPURIOUS_VECTOR_NUM, spurious_int_handler);
-    apic_write_reg(APIC_REG_SPURIOUS_INT, APIC_FLAG_ENABLE | APIC_SPURIOUS_VECTOR_NUM);
+    apic_enable();
 
     // initialize the apic timer
     apic_timer_init();

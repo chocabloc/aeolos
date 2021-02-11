@@ -6,17 +6,17 @@
 #define KMODE_CS 0x08
 #define KMODE_SS 0x10
 #define KMODE_RFLAGS 0x202
-
 #define KSTACK_SIZE 4096
-#define TID_MAX UINT16_MAX
 
 typedef uint16_t tid_t;
+#define TID_MAX UINT16_MAX
 
-typedef enum {
-    PRIORITY_MIN,
-    PRIORITY_MID,
-    PRIORITY_MAX
-} priority_t;
+typedef uint8_t priority_t;
+#define PRIORITY_IDLE 0
+#define PRIORITY_BG 5
+#define PRIORITY_MIN 10
+#define PRIORITY_MID 15
+#define PRIORITY_MAX 20
 
 typedef struct {
     uint64_t r15;
@@ -45,12 +45,12 @@ typedef struct task_t {
     void* kstack_top; // top of kernel stack
     uint64_t cr3; // virtual address space
     tid_t tid; // task id
-    int priority;
+    priority_t priority; // task base priority
+    uint64_t last_tick; // last time at which task ran
+
     struct task_t* next;
     struct task_t* prev;
 } task_t;
 
-void task_init();
-tid_t task_create(void (*entrypoint)(tid_t), priority_t priority);
-bool task_destroy(uint64_t tid);
-void task_yield();
+task_t* task_make(void (*entrypoint)(tid_t), priority_t priority);
+int task_add(void (*entry)(tid_t), priority_t priority);

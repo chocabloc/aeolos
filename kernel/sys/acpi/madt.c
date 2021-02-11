@@ -1,11 +1,12 @@
 #include "madt.h"
+#include "../panic.h"
+#include "../smp/smp.h"
 #include "klog.h"
-#include "sys/panic.h"
 
 static madt_t* madt;
 
 static uint64_t num_lapic;
-static madt_record_lapic* lapics[256];
+static madt_record_lapic* lapics[CPU_MAX];
 
 static uint64_t num_ioapic;
 static madt_record_ioapic* io_apics[4];
@@ -31,8 +32,8 @@ void madt_init()
         switch (rec->type) {
 
         case MADT_RECORD_TYPE_LAPIC: {
-            // we support only 255 cpu's
-            if (num_lapic > 255)
+            // we support only 256 cpu's
+            if (num_lapic >= CPU_MAX)
                 break;
 
             madt_record_lapic* lapic = (madt_record_lapic*)rec;

@@ -27,6 +27,7 @@
                                        : "al");
 
 #define MSR_PAT 0x0277
+#define MSR_GS_BASE 0xC0000101
 
 void cpu_features_init();
 void wrmsr(uint32_t msr, uint64_t val);

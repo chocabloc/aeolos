@@ -59,6 +59,14 @@ void apic_timer_set_mode(apic_timer_mode_t mode)
     }
 }
 
+// initialization for AP's
+void apic_timer_init_ap()
+{
+    apic_write_reg(APIC_REG_TIMER_LVT, APIC_TIMER_FLAG_MASKED | vector);
+    apic_write_reg(APIC_REG_TIMER_ICR, UINT32_MAX);
+    apic_write_reg(APIC_REG_TIMER_DCR, 0b0001);
+}
+
 void apic_timer_init()
 {
     // allocate a vector for the timer

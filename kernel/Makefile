@@ -26,11 +26,12 @@ CFLAGS = -ffreestanding \
 		 -Wall \
 		 -Wextra \
 		 -Ofast \
+		 -flto \
 		 -fno-omit-frame-pointer \
 		 -I . \
 		 -I lib
-ASFLAGS = -I .
-LINKFLAGS = -Wl,-T$(LINKSCRIPT) -nostdlib -z max-page-size=0x1000
+ASFLAGS = -I . -flto
+LINKFLAGS = -Wl,-T$(LINKSCRIPT) -nostdlib -z max-page-size=0x1000 -flto
 
 # rules
 .PHONY: clean kernel

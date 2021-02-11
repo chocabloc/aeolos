@@ -1,7 +1,10 @@
 LOAD_ADDRESS        equ 0x1000
 HIGHERHALF_OFFSET   equ 0xffffffff80000000
 AP_BOOT_COUNTER     equ 0xff0
+ARG_CPUINFO         equ 0xfe0
 ARG_CR3_VAL         equ 0xfd0
+ARG_ENTRYPOINT      equ 0xfc0
+ARG_RSP             equ 0xfb0
 ARG_IDTPTR          equ 0xfa0
 
 bits 16
@@ -76,9 +79,14 @@ lmode_entry:
     ; load idt
     lidt [ARG_IDTPTR]
 
+    ; initialize stack
+    mov rsp, [ARG_RSP]
+
+    ; pass cpu information to kernel code
+    mov rdi, [ARG_CPUINFO]
+
     ; increment counter to indicate successful boot
     lock add word [AP_BOOT_COUNTER], 1
     
-    ; wait for scheduler
-    sti
-    jmp $
+    ; jump to kernel code
+    call [ARG_ENTRYPOINT]
