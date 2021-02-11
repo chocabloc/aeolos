@@ -36,6 +36,14 @@ void wrmsr(uint32_t msr, uint64_t val)
 // enable cpu features like sse2
 void cpu_features_init()
 {
+    // if PAT is supported, set pa4 in the PAT to write-combining
+    if (cpuid_check_feature(CPUID_FEATURE_PAT)) {
+        uint64_t patval = rdmsr(MSR_PAT);
+        patval &= ~(0b111ULL << 32);
+        patval |= 0b001ULL << 32;
+        wrmsr(MSR_PAT, patval);
+    }
+
     // clear the CR0.EM bit and set the CR0.MP bit
     uint64_t vcr0;
     read_cr("cr0", &vcr0);

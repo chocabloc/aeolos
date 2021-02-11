@@ -66,15 +66,6 @@ void vmm_map(uint64_t virtaddr, uint64_t physaddr, uint64_t numpages, uint64_t f
 // Create own paging structures, as the ones provided by the bootloader cannot be relied on
 void vmm_init()
 {
-    if (!cpuid_check_feature(CPUID_FEATURE_PAT))
-        kernel_panic("PAT not supported");
-
-    // set pa4 in the PAT to write-combining
-    uint64_t patval = rdmsr(MSR_PAT);
-    patval &= ~(0b111ULL << 32);
-    patval |= 0b001ULL << 32;
-    wrmsr(MSR_PAT, patval);
-
     klog_info("Identity mapping first 1MB of memory...\n");
     vmm_map(0, 0, NUM_PAGES(0x100000), FLAG_DEFAULT);
 
