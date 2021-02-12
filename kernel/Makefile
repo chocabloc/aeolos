@@ -35,7 +35,7 @@ LINKFLAGS = -Wl,-T$(LINKSCRIPT) \
     	    -nostdlib \
 			-z max-page-size=0x1000 \
 			-flto \
-			-fuse-ld=lld
+			-fuse-ld=lld-10
 
 # rules
 .PHONY: clean kernel
