@@ -31,7 +31,11 @@ CFLAGS = -ffreestanding \
 		 -I . \
 		 -I lib
 ASFLAGS = -I . -flto
-LINKFLAGS = -Wl,-T$(LINKSCRIPT) -nostdlib -z max-page-size=0x1000 -flto
+LINKFLAGS = -Wl,-T$(LINKSCRIPT) \
+    	    -nostdlib \
+			-z max-page-size=0x1000 \
+			-flto \
+			-fuse-ld=lld
 
 # rules
 .PHONY: clean kernel

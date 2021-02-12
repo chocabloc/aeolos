@@ -13,10 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Install nasm
-      run: sudo apt-get install nasm
-    - name: Install clang 10
-      run: sudo apt-get install clang-10
+    - name: Install dependencies
+      run: sudo apt-get install -y nasm clang-10 lld
     - name: make
       run: make
     - uses: actions/upload-artifact@v2
