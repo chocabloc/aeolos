@@ -1,5 +1,6 @@
 #pragma once
 
+#include "lib/time.h"
 #include <stdint.h>
 
 #define APIC_REG_TIMER_LVT 0x320
@@ -16,10 +17,11 @@ typedef enum {
 } apic_timer_mode_t;
 
 void apic_timer_init();
-void apic_timer_init_ap();
-void apic_timer_disable();
 void apic_timer_enable();
-void apic_timer_set_handler(void (*h)(void));
+void apic_timer_stop();
+void apic_timer_start();
+void apic_timer_set_handler(void (*h)(void*));
 void apic_timer_set_frequency(uint64_t freq);
+void apic_timer_set_period(timeval_t tv);
 void apic_timer_set_mode(apic_timer_mode_t mode);
 uint8_t apic_timer_get_vector();

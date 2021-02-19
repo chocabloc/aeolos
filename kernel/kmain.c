@@ -13,14 +13,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-extern uint8_t kernel_start;
-extern uint8_t kernel_end;
-
 // first task to be executed
 void kinit(tid_t tid)
 {
     klog_ok("Multitasking initialized. First kernel task with tid %d started :)\n", tid);
-    klog_warn("This OS is a work in progress\n");
+    kernel_panic("This OS is a work in progress\n");
     while (true)
         ;
 }
@@ -29,6 +26,15 @@ void kmain(stivale2_struct* bootinfo)
 {
     // convert the physical address to a virtual one, since we will be removing identity mapping later
     bootinfo = (stivale2_struct*)PHYS_TO_VIRT(bootinfo);
+
+    // draw the banner
+    klog_printf(" \xda\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xbf\n");
+    klog_printf(" \xb3   Aeolos v0.1  \xb3\xb1\n \xb3  by chocabloc  \xb3\xb1\n");
+    klog_printf(" \xc0\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xd9\xb1\n");
+    klog_printf("  \xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\n");
+    klog_printf("Built on "__DATE__
+                " at "__TIME__
+                ".\n\n");
 
     // initialize gdt and idt
     gdt_init();
@@ -43,17 +49,7 @@ void kmain(stivale2_struct* bootinfo)
     fb_init((stv2_struct_tag_fb*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_FB_ID));
     term_init();
 
-    // we are finally ready to show the log on the screen
     klog_show();
-
-    // draw the banner
-    klog_printf(" \xda\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xbf\n");
-    klog_printf(" \xb3   Aeolos v0.1  \xb3\xb1\n \xb3  by chocabloc  \xb3\xb1\n");
-    klog_printf(" \xc0\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xd9\xb1\n");
-    klog_printf("  \xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\xd8\n");
-    klog_printf("Built on "__DATE__
-                " at "__TIME__
-                ".\n\n");
 
     // parse acpi tables
     acpi_init((stv2_struct_tag_rsdp*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_RSDP_ID));

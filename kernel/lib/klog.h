@@ -1,20 +1,27 @@
 #pragma once
 
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdint.h>
 
-void klog_vprintf(const char* s, va_list args);
-void klog_printf(const char*, ...);
-void klog_puts(const char*);
-void klog_putsn(const char* s, uint64_t len);
+#define KLOG_BUFF_LEN (UINT16_MAX + 1)
+
+typedef enum {
+    LOG_SUCCESS,
+    LOG_INFO,
+    LOG_WARN,
+    LOG_ERROR
+} loglevel_t;
+
 void klog_putchar(uint8_t);
-void klog_puthex(uint64_t n);
-void klog_putint(int n);
-
-void klog_ok(const char* s, ...);
-void klog_info(const char* s, ...);
-void klog_warn(const char* s, ...);
-void klog_err(const char* s, ...);
-
+void klog_puts(const char* s);
+void klog_printf(const char*, ...);
+void klog_vprintf(const char*, va_list);
+void klog(loglevel_t lvl, const char* s, ...);
 void klog_show();
-void klog_hide();
+void klog_show_urgent();
+
+#define klog_ok(s, ...) klog(LOG_SUCCESS, s, ##__VA_ARGS__)
+#define klog_info(s, ...) klog(LOG_INFO, s, ##__VA_ARGS__)
+#define klog_warn(s, ...) klog(LOG_WARN, s, ##__VA_ARGS__)
+#define klog_err(s, ...) klog(LOG_ERROR, s, ##__VA_ARGS__)

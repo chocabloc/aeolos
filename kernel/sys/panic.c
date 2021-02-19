@@ -1,16 +1,22 @@
 #include "panic.h"
+#include "apic/timer.h"
 #include "dev/term/term.h"
 #include "klog.h"
 #include "lock.h"
 #include "symbols.h"
+#include "sys/pit.h"
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 
-extern void kernel_start;
-extern void kernel_end;
-
 static spinlock_t panic_lock;
+
+__attribute__((interrupt)) static void halt(void* v __attribute__((unused)))
+{
+    asm volatile("cli");
+    while (true)
+        asm volatile("hlt");
+}
 
 // get function name from address, using the symbol table
 static const char* symtab_get_func(uint64_t addr)
@@ -49,21 +55,29 @@ __attribute__((noreturn)) void kernel_panic(const char* s, ...)
     asm volatile("cli");
     spinlock_take(&panic_lock);
 
-    // show on screen if terminal is ready
-    if (term_isready())
-        klog_show();
+    // stop other cores
+    apic_timer_set_handler(halt);
 
-    term_setfgcolor(TERM_COLOR_RED);
-    klog_puts("[PANIC] ");
-    term_setfgcolor(TERM_COLOR_WHITE);
+    // wait for some time for cores to stop
+    pit_wait(10);
 
+    // clear the screen and print a friendly message
+    klog_puts("\033[47m\033[30m\033c\n\n");
+    int numspaces = (term_getwidth() - 94) / 2;
+    for (int i = 0; i < numspaces; i++)
+        klog_putchar(' ');
+    klog_puts("Sorry, but the OS just encountered an unrecoverable error. Some more details are given below:");
+
+    // now print error information
+    klog_puts("\n\n\n\033[31m[PANIC] \033[30;1m");
     va_list args;
     va_start(args, s);
     klog_vprintf(s, args);
     va_end(args);
-
     do_stacktrace();
+    klog_show_urgent();
 
+    // halt this core
     while (true)
         asm volatile("hlt");
 }

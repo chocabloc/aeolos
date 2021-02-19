@@ -1,84 +1,53 @@
 #include "klog.h"
 #include "dev/term/term.h"
 #include "lock.h"
+#include "proc/task.h"
 #include <stdbool.h>
-#include <stddef.h>
 
 // ring buffer for kernel log
-static uint8_t log_buff[16384];
+static uint8_t log_buff[KLOG_BUFF_LEN];
 static uint16_t log_start = 0;
 static uint16_t log_end = 0;
 
-// is the log shown
-static bool shown = false;
+static spinlock_t log_lock;
 
-static void klog_putch(uint8_t i)
+static void putch(uint8_t i)
 {
     log_buff[log_end++] = i;
-
-    if (!log_end || log_start)
+    if (log_end == log_start)
         log_start++;
-
-    if (shown)
-        term_putchar(i);
 }
 
-void klog_show()
-{
-    shown = true;
-}
-
-void klog_hide()
-{
-    shown = false;
-}
-
-void klog_putchar(uint8_t i)
-{
-    klog_putch(i);
-    if (shown)
-        term_flush();
-}
-
-void klog_putsn(const char* s, uint64_t len)
+static void putsn(const char* s, uint64_t len)
 {
     for (uint64_t i = 0; i < len; i++)
-        klog_putch(s[i]);
-
-    if (shown)
-        term_flush();
+        putch(s[i]);
 }
 
-void klog_puts(const char* s)
+static void puts(const char* s)
 {
     for (uint64_t i = 0; s[i] != '\0'; i++)
-        klog_putch(s[i]);
-
-    if (shown)
-        term_flush();
+        putch(s[i]);
 }
 
 // print number as 64-bit hex
-void klog_puthex(uint64_t n)
+static void puthex(uint64_t n)
 {
-    klog_puts("0x");
+    puts("0x");
     for (int i = 60; i >= 0; i -= 4) {
         uint64_t digit = (n >> i) & 0xF;
-        klog_putch((digit <= 9) ? (digit + '0') : (digit - 10 + 'A'));
+        putch((digit <= 9) ? (digit + '0') : (digit - 10 + 'A'));
     }
-
-    if (shown)
-        term_flush();
 }
 
 // print number
-void klog_putint(int n)
+static void putint(int n)
 {
     if (n == 0)
-        klog_putch('0');
+        putch('0');
 
     if (n < 0) {
-        klog_putch('-');
+        putch('-');
         n = -n;
     }
     size_t div = 1;
@@ -90,103 +59,136 @@ void klog_putint(int n)
     while (div >= 10) {
         int digit = ((n % div) - (n % (div / 10))) / (div / 10);
         div /= 10;
-        klog_putch(digit + '0');
+        putch(digit + '0');
     }
-
-    if (shown)
-        term_flush();
 }
 
-void klog_vprintf(const char* s, va_list args)
+static void klogdisplayd(tid_t tid __attribute__((unused)))
+{
+    // maximum no of chars to print
+    int numchars = term_getwidth() * term_getheight();
+    while (true) {
+        term_clear();
+        spinlock_take(&log_lock);
+        int start = log_end - numchars;
+        start = (start >= 0) ? start : 0;
+        for (int i = start; i < log_end; i++)
+            term_putchar(log_buff[i]);
+        spinlock_release(&log_lock);
+        term_flush();
+    }
+}
+
+static void vprintf(const char* s, va_list args)
 {
     for (size_t i = 0; s[i] != '\0'; i++) {
         switch (s[i]) {
         case '%': {
             switch (s[i + 1]) {
             case '%':
-                klog_putch('%');
+                putch('%');
                 break;
 
             case 'd':
-                klog_putint(va_arg(args, int));
+                putint(va_arg(args, int));
                 break;
 
             case 'x':
-                klog_puthex(va_arg(args, uint64_t));
+                puthex(va_arg(args, uint64_t));
                 break;
 
             case 's':
-                klog_puts(va_arg(args, const char*));
+                puts(va_arg(args, const char*));
                 break;
 
             case 'b':
-                klog_puts(va_arg(args, int) ? "true" : "false");
+                puts(va_arg(args, int) ? "true" : "false");
                 break;
             }
             i++;
         } break;
 
         default:
-            klog_putch(s[i]);
+            putch(s[i]);
         }
     }
+}
 
-    if (shown)
-        term_flush();
+void klog_putchar(uint8_t i)
+{
+    spinlock_take(&log_lock);
+    putch(i);
+    spinlock_release(&log_lock);
+}
+
+void klog_puts(const char* s)
+{
+    spinlock_take(&log_lock);
+    puts(s);
+    spinlock_release(&log_lock);
+}
+
+void klog_putsn(const char* s, uint64_t len)
+{
+    spinlock_take(&log_lock);
+    putsn(s, len);
+    spinlock_release(&log_lock);
+}
+
+void klog_vprintf(const char* s, va_list args)
+{
+    spinlock_take(&log_lock);
+    vprintf(s, args);
+    spinlock_release(&log_lock);
 }
 
 void klog_printf(const char* s, ...)
 {
+    spinlock_take(&log_lock);
     va_list args;
     va_start(args, s);
-    klog_vprintf(s, args);
+    vprintf(s, args);
     va_end(args);
+    spinlock_release(&log_lock);
 }
 
-void klog_ok(const char* s, ...)
+void klog(loglevel_t lvl, const char* s, ...)
 {
-    term_setfgcolor(TERM_COLOR_LTGREEN);
-    klog_puts("[OKAY] ");
-    term_setfgcolor(TERM_COLOR_GRAY);
+    spinlock_take(&log_lock);
+    switch (lvl) {
+    case LOG_SUCCESS:
+        puts("\033[32;1m[OKAY] \033[0m");
+        break;
+    case LOG_WARN:
+        puts("\033[33m[WARNING] \033[0m");
+        break;
+    case LOG_ERROR:
+        puts("\033[31;1m[ERROR] \033[0m");
+        break;
+    default:
+        puts("\033[34;1m[INFO] \033[0m");
+    }
 
     va_list args;
     va_start(args, s);
-    klog_vprintf(s, args);
+    vprintf(s, args);
     va_end(args);
+    spinlock_release(&log_lock);
 }
 
-void klog_info(const char* s, ...)
+void klog_show()
 {
-    term_setfgcolor(TERM_COLOR_LTBLUE);
-    klog_puts("[INFO] ");
-    term_setfgcolor(TERM_COLOR_GRAY);
-
-    va_list args;
-    va_start(args, s);
-    klog_vprintf(s, args);
-    va_end(args);
+    task_add(klogdisplayd, PRIORITY_MAX);
 }
 
-void klog_err(const char* s, ...)
+// when you really need to show the log
+void klog_show_urgent()
 {
-    term_setfgcolor(TERM_COLOR_LTRED);
-    klog_puts("[ERROR] ");
-    term_setfgcolor(TERM_COLOR_GRAY);
-
-    va_list args;
-    va_start(args, s);
-    klog_vprintf(s, args);
-    va_end(args);
-}
-
-void klog_warn(const char* s, ...)
-{
-    term_setfgcolor(TERM_COLOR_ORANGE);
-    klog_puts("[WARNING] ");
-    term_setfgcolor(TERM_COLOR_GRAY);
-
-    va_list args;
-    va_start(args, s);
-    klog_vprintf(s, args);
-    va_end(args);
+    int numchars = term_getwidth() * term_getheight();
+    term_clear();
+    int start = log_end - numchars;
+    start = (start >= 0) ? start : 0;
+    for (int i = start; i < log_end; i++)
+        term_putchar(log_buff[i]);
+    term_flush();
 }

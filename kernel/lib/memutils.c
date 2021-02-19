@@ -2,11 +2,13 @@
 
 void memcpy(void* src, void* target, uint64_t len)
 {
-    uint8_t* s = (uint8_t*)src;
-    uint8_t* t = (uint8_t*)target;
-
-    for (uint64_t i = 0; i < len; i++)
-        t[i] = s[i];
+    asm volatile("mov %[len], %%rcx;"
+                 "mov %[src], %%rsi;"
+                 "mov %[tgt], %%rdi;"
+                 "rep movsb;"
+                 :
+                 : [len] "g"(len), [src] "g"(src), [tgt] "g"(target)
+                 : "memory");
 }
 
 void memset(void* addr, uint8_t val, uint64_t len)

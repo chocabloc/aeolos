@@ -1,5 +1,6 @@
 #include "sched.h"
 #include "../task.h"
+#include "lib/time.h"
 #include "lock.h"
 #include "sys/apic/apic.h"
 #include "sys/apic/timer.h"
@@ -7,16 +8,16 @@
 #include "tqueue.h"
 
 static spinlock_t sched_lock;
-
+static timeval_t timeslice = TIMESLICE_DEFAULT;
 static task_t* tasks_idle[CPU_MAX];
-static task_t* tasks_running[CPU_MAX] __attribute__((unused));
+static task_t* tasks_running[CPU_MAX];
 
 static tqueue_t tasks_bg;
 static tqueue_t tasks_min;
 static tqueue_t tasks_mid;
 static tqueue_t tasks_max;
 
-extern void init_context_switch();
+extern void init_context_switch(void* v);
 extern void finish_context_switch(task_t* next);
 
 static void idle(tid_t tid __attribute__((unused)))
@@ -25,7 +26,7 @@ static void idle(tid_t tid __attribute__((unused)))
         asm volatile("hlt");
 }
 
-bool sched_add(task_t* t)
+static bool add_task(task_t* t)
 {
     switch (t->priority) {
     case PRIORITY_BG:
@@ -45,13 +46,30 @@ bool sched_add(task_t* t)
     }
 }
 
+bool sched_add(task_t* t)
+{
+    spinlock_take(&sched_lock);
+    bool ret = add_task(t);
+    spinlock_release(&sched_lock);
+    return ret;
+}
+
 void _do_context_switch(task_state_t* state)
 {
     static uint64_t ticks = 0;
-
     spinlock_take(&sched_lock);
 
     uint16_t cpu = smp_get_current_info()->cpu_id;
+
+    // save state of current task, if there is one
+    task_t* curr = tasks_running[cpu];
+    if (curr) {
+        curr->kstack_top = state;
+        curr->last_tick = ticks;
+
+        // insert it in respective list
+        add_task(curr);
+    }
 
     // next task to run
     task_t* next = NULL;
@@ -89,19 +107,10 @@ void _do_context_switch(task_state_t* state)
     }
 
 chosen : {
-    // save state of current task, if there is one
-    task_t* curr = tasks_running[cpu];
-    if (curr) {
-        curr->kstack_top = state;
-        curr->last_tick = ticks;
-
-        // insert it in respective list
-        sched_add(curr);
-    }
-
     // jump to next task
     tasks_running[cpu] = next;
     ticks++;
+    apic_timer_set_period(timeslice);
     apic_send_eoi();
     spinlock_release(&sched_lock);
     finish_context_switch(next);
@@ -115,8 +124,8 @@ void sched_init(void (*entry)(tid_t))
     if (entry)
         task_add(entry, PRIORITY_MID);
 
-    apic_timer_set_frequency(500);
-    apic_timer_set_mode(APIC_TIMER_MODE_PERIODIC);
+    apic_timer_set_period(timeslice);
+    apic_timer_set_mode(APIC_TIMER_MODE_ONESHOT);
     apic_timer_set_handler(init_context_switch);
-    apic_timer_enable();
+    apic_timer_start();
 }

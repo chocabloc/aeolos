@@ -1,6 +1,7 @@
 #include "timer.h"
 #include "apic.h"
 #include "klog.h"
+#include "lib/time.h"
 #include "sys/cpu/cpu.h"
 #include "sys/idt.h"
 #include <stdbool.h>
@@ -17,19 +18,19 @@ __attribute__((interrupt)) static void apic_timer_handler(void* v __attribute__(
     apic_send_eoi();
 }
 
-void apic_timer_disable()
+void apic_timer_stop()
 {
     uint32_t val = apic_read_reg(APIC_REG_TIMER_LVT);
     apic_write_reg(APIC_REG_TIMER_LVT, val | APIC_TIMER_FLAG_MASKED);
 }
 
-void apic_timer_enable()
+void apic_timer_start()
 {
     uint32_t val = apic_read_reg(APIC_REG_TIMER_LVT);
     apic_write_reg(APIC_REG_TIMER_LVT, val & ~(APIC_TIMER_FLAG_MASKED));
 }
 
-void apic_timer_set_handler(void (*h)(void))
+void apic_timer_set_handler(void (*h)(void*))
 {
     idt_set_handler(vector, h);
 }
@@ -37,6 +38,12 @@ void apic_timer_set_handler(void (*h)(void))
 void apic_timer_set_frequency(uint64_t freq)
 {
     apic_write_reg(APIC_REG_TIMER_ICR, base_freq / (freq * divisor));
+}
+
+void apic_timer_set_period(timeval_t tv)
+{
+    uint64_t freq = 1000000000 / ((tv.s * 1000000000) + (tv.ms * 1000000) + (tv.us * 1000) + tv.ns);
+    apic_timer_set_frequency(freq);
 }
 
 uint8_t apic_timer_get_vector()
@@ -59,8 +66,7 @@ void apic_timer_set_mode(apic_timer_mode_t mode)
     }
 }
 
-// initialization for AP's
-void apic_timer_init_ap()
+void apic_timer_enable()
 {
     apic_write_reg(APIC_REG_TIMER_LVT, APIC_TIMER_FLAG_MASKED | vector);
     apic_write_reg(APIC_REG_TIMER_ICR, UINT32_MAX);
@@ -81,10 +87,8 @@ void apic_timer_init()
     port_outb(0x40, 0x00);
     port_outb(0x40, 0xff);
 
-    // initialize the apic timer, set DCR to divide by 4
-    apic_write_reg(APIC_REG_TIMER_LVT, APIC_TIMER_FLAG_MASKED | vector);
-    apic_write_reg(APIC_REG_TIMER_ICR, UINT32_MAX);
-    apic_write_reg(APIC_REG_TIMER_DCR, 0b0001);
+    // enable the apic timer, set DCR to divide by 4
+    apic_timer_enable();
     divisor = 4;
 
     // wait for exactly 1/18.2779 s

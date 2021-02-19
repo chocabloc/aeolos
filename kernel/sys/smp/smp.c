@@ -43,7 +43,7 @@ void smp_ap_entrypoint(cpu_t* cpuinfo)
 
     // enable the apic
     apic_enable();
-    apic_timer_init_ap();
+    apic_timer_enable();
 
     // initialize scheduler
     sched_init(NULL);
