@@ -36,8 +36,18 @@ typedef struct {
     uint8_t data[];
 } __attribute__((packed)) acpi_sdt;
 
+// acpi generic address structure
+typedef struct {
+    uint8_t addr_space_id;
+    uint8_t reg_bit_width;
+    uint8_t reg_bit_offset;
+    uint8_t reserved;
+    uint64_t address;
+} __attribute__((packed)) acpi_gas_t;
+
 #define SDT_SIGN_MADT "APIC"
 #define SDT_SIGN_BGRT "BGRT"
+#define SDT_SIGN_HPET "HPET"
 
 void acpi_init(stv2_struct_tag_rsdp*);
 acpi_sdt* acpi_get_sdt(const char* sign);

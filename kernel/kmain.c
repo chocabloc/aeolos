@@ -1,4 +1,5 @@
 #include "dev/fb/fb.h"
+#include "dev/serial/serial.h"
 #include "dev/term/term.h"
 #include "klog.h"
 #include "mm/mm.h"
@@ -7,6 +8,7 @@
 #include "sys/apic/apic.h"
 #include "sys/cpu/cpu.h"
 #include "sys/gdt.h"
+#include "sys/hpet.h"
 #include "sys/idt.h"
 #include "sys/panic.h"
 #include "sys/smp/smp.h"
@@ -16,6 +18,7 @@
 // first task to be executed
 void kinit(tid_t tid)
 {
+    klog_show();
     klog_ok("Multitasking initialized. First kernel task with tid %d started :)\n", tid);
     kernel_panic("This OS is a work in progress\n");
     while (true)
@@ -47,12 +50,12 @@ void kmain(stivale2_struct* bootinfo)
 
     // initialize framebuffer and terminal
     fb_init((stv2_struct_tag_fb*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_FB_ID));
+    serial_init();
     term_init();
-
-    klog_show();
 
     // parse acpi tables
     acpi_init((stv2_struct_tag_rsdp*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_RSDP_ID));
+    hpet_init();
     apic_init();
     smp_init();
 

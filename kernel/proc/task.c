@@ -33,6 +33,9 @@ task_t* task_make(void (*entrypoint)(tid_t), priority_t priority)
     read_cr("cr3", &(ntask->cr3));
     ntask->tid = curr_tid;
     ntask->priority = priority;
+    ntask->last_tick = 0;
+    ntask->status = TASK_READY;
+    ntask->wakeuptime = 0;
 
     curr_tid++;
     return ntask;

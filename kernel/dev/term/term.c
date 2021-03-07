@@ -120,10 +120,7 @@ static void putchar_at(uint8_t c, size_t px, size_t py)
 
     for (size_t i = 0; i < term_font.height; i++) {
         for (size_t j = 0; j < term_font.width; j++) {
-            if (glyph[i] & masks[j])
-                fb_putpixel(x + j, y + i, fgcolor);
-            else
-                fb_putpixel(x + j, y + i, bgcolor);
+            fb_putpixel(x + j, y + i, (glyph[i] & masks[j]) ? fgcolor : bgcolor);
         }
     }
 }
@@ -151,6 +148,9 @@ void term_putchar(uint8_t c)
         return;
 
     switch (c) {
+    case '\0':
+        return;
+
     case '\n':
         cursor_x = 0;
         cursor_y++;

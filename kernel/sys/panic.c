@@ -61,15 +61,8 @@ __attribute__((noreturn)) void kernel_panic(const char* s, ...)
     // wait for some time for cores to stop
     pit_wait(10);
 
-    // clear the screen and print a friendly message
-    klog_puts("\033[47m\033[30m\033c\n\n");
-    int numspaces = (term_getwidth() - 94) / 2;
-    for (int i = 0; i < numspaces; i++)
-        klog_putchar(' ');
-    klog_puts("Sorry, but the OS just encountered an unrecoverable error. Some more details are given below:");
-
     // now print error information
-    klog_puts("\n\n\n\033[31m[PANIC] \033[30;1m");
+    klog_puts("\033[31m[PANIC] \033[0m");
     va_list args;
     va_start(args, s);
     klog_vprintf(s, args);

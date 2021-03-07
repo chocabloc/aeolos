@@ -3,6 +3,7 @@
 #include "klog.h"
 #include "lib/time.h"
 #include "sys/cpu/cpu.h"
+#include "sys/hpet.h"
 #include "sys/idt.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -42,7 +43,7 @@ void apic_timer_set_frequency(uint64_t freq)
 
 void apic_timer_set_period(timeval_t tv)
 {
-    uint64_t freq = 1000000000 / ((tv.s * 1000000000) + (tv.ms * 1000000) + (tv.us * 1000) + tv.ns);
+    uint64_t freq = 1000000000 / tv;
     apic_timer_set_frequency(freq);
 }
 
@@ -79,30 +80,27 @@ void apic_timer_init()
     vector = idt_get_vector();
     idt_set_handler(vector, &apic_timer_handler);
 
+    // unmask the apic timer interrupt and set divisor to 4
+    apic_write_reg(APIC_REG_TIMER_LVT, APIC_TIMER_FLAG_MASKED | vector);
+    apic_write_reg(APIC_REG_TIMER_DCR, 0b0001);
+    divisor = 4;
+
+    // calibrate the timer
+    apic_write_reg(APIC_REG_TIMER_ICR, UINT32_MAX);
+    hpet_nanosleep(MILLIS_TO_NANOS(500));
+    base_freq = ((UINT32_MAX - apic_read_reg(APIC_REG_TIMER_CCR)) * 2) * divisor;
+
     /*
+    
      * initialize the pit as mode 0, lobyte/hibyte for calibration
      * set initial count to 0xff00, which will be decreased at about 1.2 mhz, taking 1/18.2779 s
-     */
     port_outb(0x43, 0b00110000);
     port_outb(0x40, 0x00);
     port_outb(0x40, 0xff);
 
     // enable the apic timer, set DCR to divide by 4
     apic_timer_enable();
-    divisor = 4;
-
-    // wait for exactly 1/18.2779 s
-    while (true) {
-        uint8_t lo, hi;
-        port_inb(0x40, &lo);
-        port_inb(0x40, &hi);
-        // check for overflow
-        if (hi == 0xff && lo > 0x00)
-            break;
-    }
-
-    // now calculate the base frequency
-    base_freq = (double)(UINT32_MAX - apic_read_reg(APIC_REG_TIMER_CCR)) * 18.277910539 * divisor;
+    */
 
     klog_info("APIC Timer base frequency: %d Hz. Divisor: 4.\n", base_freq);
     klog_ok("APIC Timer initialized\n");

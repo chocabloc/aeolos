@@ -14,16 +14,18 @@
                                      : "g"(n)           \
                                      : "rax");
 
-#define port_outb(port, n) asm volatile("movb $" #n ", %%al;" \
-                                        "out %%al, $" #port   \
-                                        :                     \
-                                        :                     \
-                                        : "al");
+#define port_outb(port, n) asm volatile("movb %0, %%al;"    \
+                                        "movw %1, %%dx;"    \
+                                        "out %%al, %%dx;"   \
+                                        :                   \
+                                        : "g"(n), "g"(port) \
+                                        : "al", "dx");
 
-#define port_inb(port, n) asm volatile("in $" #port ", %%al;" \
-                                       "movb %%al, %0"        \
-                                       : "=g"(*(n))           \
-                                       :                      \
+#define port_inb(port, n) asm volatile("movw %1, %%dx;" \
+                                       "in %%dx, %%al;" \
+                                       "mov %%al, %0"   \
+                                       : "=g"(*(n))     \
+                                       : "g"(port)      \
                                        : "al");
 
 #define MSR_PAT 0x0277

@@ -1,4 +1,5 @@
 #include "klog.h"
+#include "dev/serial/serial.h"
 #include "dev/term/term.h"
 #include "lock.h"
 #include "proc/task.h"
@@ -16,6 +17,7 @@ static void putch(uint8_t i)
     log_buff[log_end++] = i;
     if (log_end == log_start)
         log_start++;
+    serial_send(i);
 }
 
 static void putsn(const char* s, uint64_t len)
@@ -67,12 +69,11 @@ static void klogdisplayd(tid_t tid __attribute__((unused)))
 {
     // maximum no of chars to print
     int numchars = term_getwidth() * term_getheight();
+
     while (true) {
         term_clear();
         spinlock_take(&log_lock);
-        int start = log_end - numchars;
-        start = (start >= 0) ? start : 0;
-        for (int i = start; i < log_end; i++)
+        for (uint16_t i = log_end - numchars; i != log_end; i++)
             term_putchar(log_buff[i]);
         spinlock_release(&log_lock);
         term_flush();
@@ -186,9 +187,7 @@ void klog_show_urgent()
 {
     int numchars = term_getwidth() * term_getheight();
     term_clear();
-    int start = log_end - numchars;
-    start = (start >= 0) ? start : 0;
-    for (int i = start; i < log_end; i++)
+    for (uint16_t i = log_end - numchars; i != log_end; i++)
         term_putchar(log_buff[i]);
     term_flush();
 }

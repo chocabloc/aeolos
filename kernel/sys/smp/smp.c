@@ -9,7 +9,7 @@
 #include "sys/apic/apic.h"
 #include "sys/apic/timer.h"
 #include "sys/cpu/cpu.h"
-#include "sys/pit.h"
+#include "sys/hpet.h"
 #include <stddef.h>
 
 // smp trampoline code to be executed by AP's
@@ -113,7 +113,7 @@ void smp_init()
 
         // send the init ipi
         apic_send_ipi(lapics[i]->apic_id, 0, APIC_IPI_TYPE_INIT);
-        pit_wait(10);
+        hpet_nanosleep(MILLIS_TO_NANOS(10));
 
         bool success = false;
         for (int k = 0; k < 2; k++) { // send startup ipi 2 times
@@ -125,7 +125,7 @@ void smp_init()
                     success = true;
                     break;
                 }
-                pit_wait(10);
+                hpet_nanosleep(MILLIS_TO_NANOS(10));
             }
             if (success)
                 break;
