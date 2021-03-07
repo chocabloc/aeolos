@@ -49,7 +49,6 @@ static void sched_janitor(tid_t tid __attribute__((unused)))
         spinlock_take(&sched_lock);
         task_t* t;
         while ((t = tq_pop_back(&tasks_dead))) {
-            klog_info("Deleting task %d, memory left: %d kb\n", t->tid, (pmm_get_mem_info()->free_mem / 1024));
             kmfree(t->kstack_top, KSTACK_SIZE);
             kmfree(t, sizeof(task_t));
         }
