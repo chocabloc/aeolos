@@ -146,6 +146,12 @@ chosen : {
 
 void sched_sleep(timeval_t nanos)
 {
+    // if sleep time is too little, busy sleep
+    if (nanos < TIMESLICE_DEFAULT) {
+        hpet_nanosleep(nanos);
+        goto done;
+    }
+
     spinlock_take(&sched_lock);
     task_t* curr = tasks_running[smp_get_current_info()->cpu_id];
     curr->wakeuptime = hpet_get_nanos() + nanos;
@@ -165,9 +171,10 @@ void sched_sleep(timeval_t nanos)
         }
     }
     spinlock_release(&sched_lock);
-
-    // wait for scheduler
     asm volatile("hlt");
+
+done:
+    return;
 }
 
 void sched_die()
