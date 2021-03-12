@@ -5,7 +5,8 @@ A little x86_64 hobby OS
 * A framebuffer console
 * Physical Memory Manager
 * Virtual Memory Manager
-* APIC Timer
+* ACPI Tables parsing
+* APIC and HPET Timer
 * Multitasking with SMP
 * Usermode support (partial)
 
