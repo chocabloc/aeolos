@@ -16,4 +16,3 @@ A little x86_64 hobby OS
 ### To try out:
 Grab the latest artifact from [Github Actions](https://github.com/chocabloc/aeolos/actions)
  \
- \
