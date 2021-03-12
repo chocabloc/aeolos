@@ -9,7 +9,7 @@
 // highest used tid
 static tid_t curr_tid = 0;
 
-task_t* task_make(void (*entrypoint)(tid_t), priority_t priority)
+task_t* task_make(void (*entry)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap)
 {
     // could not allocate a tid
     if (curr_tid == TID_MAX)
@@ -17,20 +17,29 @@ task_t* task_make(void (*entrypoint)(tid_t), priority_t priority)
 
     // allocate memory for the new task and its stack
     task_t* ntask = kmalloc(sizeof(task_t));
-    void* nstack = kmalloc(KSTACK_SIZE) + KSTACK_SIZE;
+    ntask->kstack_limit = kmalloc(KSTACK_SIZE);
+    ntask->kstack_top = ntask->kstack_limit + KSTACK_SIZE;
 
-    // create the stack frame and update the state to defaults for kernel mode
-    task_state_t* ntask_state = nstack - sizeof(task_state_t);
-    ntask_state->cs = KMODE_CS;
-    ntask_state->ss = KMODE_SS;
-    ntask_state->rip = (uint64_t)entrypoint;
-    ntask_state->rsp = (uint64_t)nstack;
-    ntask_state->rflags = KMODE_RFLAGS;
+    // create the stack frame and update the state to defaults
+    task_state_t* ntask_state = ntask->kstack_top - sizeof(task_state_t);
+    if (mode == TASK_KERNEL_MODE) {
+        ntask_state->cs = KMODE_CS;
+        ntask_state->ss = KMODE_SS;
+    } else {
+        ntask_state->cs = UMODE_CS;
+        ntask_state->ss = UMODE_SS;
+    }
+    ntask_state->rflags = RFLAGS_DEFAULT;
+    ntask_state->rip = (uint64_t)entry;
+    ntask_state->rsp = rsp ? (uint64_t)rsp : (uint64_t)ntask->kstack_top;
     ntask_state->rdi = curr_tid; // pass the tid to the task
 
     // initialize the task
     ntask->kstack_top = ntask_state;
-    read_cr("cr3", &(ntask->cr3));
+    if (pagemap)
+        ntask->cr3 = pagemap;
+    else
+        read_cr("cr3", &(ntask->cr3));
     ntask->tid = curr_tid;
     ntask->priority = priority;
     ntask->last_tick = 0;
@@ -41,9 +50,9 @@ task_t* task_make(void (*entrypoint)(tid_t), priority_t priority)
     return ntask;
 }
 
-int task_add(void (*entry)(tid_t), priority_t priority)
+int task_add(void (*entry)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap)
 {
-    task_t* t = task_make(entry, priority);
+    task_t* t = task_make(entry, priority, mode, rsp, pagemap);
     if (t) {
         sched_add(t);
         return t->tid;

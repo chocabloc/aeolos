@@ -39,14 +39,13 @@ void kmain(stivale2_struct* bootinfo)
                 " at "__TIME__
                 ".\n\n");
 
-    // initialize gdt and idt
-    gdt_init();
     idt_init();
     cpu_features_init();
 
     // initialize pmm and vmm
     pmm_init((stv2_struct_tag_mmap*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_MMAP_ID));
     vmm_init();
+    gdt_init();
 
     // initialize framebuffer and terminal
     fb_init((stv2_struct_tag_fb*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_FB_ID));

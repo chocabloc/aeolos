@@ -49,7 +49,7 @@ static void sched_janitor(tid_t tid __attribute__((unused)))
         spinlock_take(&sched_lock);
         task_t* t;
         while ((t = tq_pop_back(&tasks_dead))) {
-            kmfree(t->kstack_top, KSTACK_SIZE);
+            kmfree(t->kstack_limit, KSTACK_SIZE);
             kmfree(t, sizeof(task_t));
         }
         spinlock_release(&sched_lock);
@@ -91,13 +91,18 @@ void _do_context_switch(task_state_t* state)
         curr->last_tick = ticks;
 
         // insert it in respective list, if ready
-        if (curr->status == TASK_READY)
+        if (curr->status == TASK_RUNNING) {
+            curr->status = TASK_READY;
             add_task(curr);
+        }
     }
 
     // wake up tasks which need to be woken up
-    while (tasks_asleep.back && tasks_asleep.back->wakeuptime < hpet_get_nanos())
-        add_task(tq_pop_back(&tasks_asleep));
+    while (tasks_asleep.back && tasks_asleep.back->wakeuptime < hpet_get_nanos()) {
+        task_t* t = tq_pop_back(&tasks_asleep);
+        t->status = TASK_READY;
+        add_task(t);
+    }
 
     // next task to run
     task_t* next = NULL;
@@ -135,8 +140,11 @@ void _do_context_switch(task_state_t* state)
     }
 
 chosen : {
-    next->status = TASK_READY;
+    next->status = TASK_RUNNING;
     tasks_running[cpu] = next;
+
+    // set the rsp0 in tss
+    smp_get_current_info()->tss.rsp0 = (uint64_t)(next->kstack_limit + KSTACK_SIZE);
     ticks++;
     apic_send_eoi();
     spinlock_release(&sched_lock);
@@ -199,12 +207,13 @@ bool sched_add(task_t* t)
 
 void sched_init(void (*entry)(tid_t))
 {
-    tasks_idle[smp_get_current_info()->cpu_id] = task_make(idle, PRIORITY_IDLE);
+    uint16_t cpu_id = smp_get_current_info()->cpu_id;
+    tasks_idle[cpu_id] = task_make(idle, PRIORITY_IDLE, TASK_KERNEL_MODE, NULL, 0);
 
     // scheduler has been started on the bsp
     if (entry) {
-        task_add(entry, PRIORITY_MID);
-        task_add(sched_janitor, PRIORITY_MIN);
+        task_add(entry, PRIORITY_MID, TASK_KERNEL_MODE, NULL, 0);
+        task_add(sched_janitor, PRIORITY_MIN, TASK_KERNEL_MODE, NULL, 0);
     }
 
     apic_timer_set_period(TIMESLICE_DEFAULT);

@@ -6,7 +6,10 @@
 
 #define KMODE_CS 0x08
 #define KMODE_SS 0x10
-#define KMODE_RFLAGS 0x202
+#define UMODE_CS 0x1b
+#define UMODE_SS 0x23
+#define RFLAGS_DEFAULT 0x0202
+
 #define KSTACK_SIZE 4096
 
 typedef uint16_t tid_t;
@@ -20,7 +23,13 @@ typedef uint8_t priority_t;
 #define PRIORITY_MAX 70
 
 typedef enum {
+    TASK_KERNEL_MODE,
+    TASK_USER_MODE
+} tmode_t;
+
+typedef enum {
     TASK_READY,
+    TASK_RUNNING,
     TASK_SLEEPING,
     TASK_DEAD
 } tstatus_t;
@@ -49,17 +58,20 @@ typedef struct {
 } task_state_t;
 
 typedef struct task_t {
-    void* kstack_top; // top of kernel stack
+    void* kstack_top; // kernel stack top
     uint64_t cr3; // virtual address space
+
     tid_t tid; // task id
-    priority_t priority; // task base priority
+    priority_t priority; // task priority
     uint64_t last_tick; // last tick at which task ran
     tstatus_t status; // current status of task
     timeval_t wakeuptime; // time at which task should wake up
+    tmode_t mode; // kernel mode or usermode
+    void* kstack_limit; // kernel stack limit
 
     struct task_t* next;
     struct task_t* prev;
 } task_t;
 
-task_t* task_make(void (*entrypoint)(tid_t), priority_t priority);
-int task_add(void (*entry)(tid_t), priority_t priority);
+task_t* task_make(void (*entrypoint)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap);
+int task_add(void (*entry)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap);

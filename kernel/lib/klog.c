@@ -179,7 +179,7 @@ void klog(loglevel_t lvl, const char* s, ...)
 
 void klog_show()
 {
-    task_add(klogdisplayd, PRIORITY_MAX);
+    task_add(klogdisplayd, PRIORITY_MAX, TASK_KERNEL_MODE, NULL, 0);
 }
 
 // when you really need to show the log

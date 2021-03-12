@@ -9,6 +9,7 @@
 #include "sys/apic/apic.h"
 #include "sys/apic/timer.h"
 #include "sys/cpu/cpu.h"
+#include "sys/gdt.h"
 #include "sys/hpet.h"
 #include <stddef.h>
 
@@ -25,21 +26,32 @@ const smp_info_t* smp_get_info()
     return &info;
 }
 
-const cpu_t* smp_get_current_info()
+cpu_t* smp_get_current_info()
 {
     return (cpu_t*)rdmsr(MSR_GS_BASE);
+}
+
+static void init_tss(cpu_t* cpuinfo)
+{
+    cpuinfo->tss.iopb_offset = sizeof(tss_t);
+    cpuinfo->tss.rsp0 = 0; // will be filled in by the scheduler
+    gdt_install_tss(&(cpuinfo->tss));
 }
 
 // AP's will run this code upon boot
 void smp_ap_entrypoint(cpu_t* cpuinfo)
 {
-    klog_printf(" Done\n");
-
-    // put cpu information in gs
-    wrmsr(MSR_GS_BASE, (uint64_t)cpuinfo);
+    klog_printf(" Done\n", cpuinfo->cpu_id);
 
     // initialize cpu features
     cpu_features_init();
+
+    // initialze gdt and make a tss
+    gdt_init();
+    init_tss(cpuinfo);
+
+    // put cpu information in gs
+    wrmsr(MSR_GS_BASE, (uint64_t)cpuinfo);
 
     // enable the apic
     apic_enable();
@@ -98,6 +110,7 @@ void smp_init()
             klog_info("CPU %d is BSP\n", lapics[i]->proc_id);
             info.cpus[info.num_cpus].is_bsp = true;
             wrmsr(MSR_GS_BASE, (uint64_t)&info.cpus[info.num_cpus]);
+            init_tss(&info.cpus[info.num_cpus]);
             info.num_cpus++;
             continue;
         }
