@@ -7,9 +7,9 @@ A little x86_64 hobby OS
 * Virtual Memory Manager
 * APIC Timer
 * Multitasking with SMP
+* Usermode support (partial)
 
 ### Things not yet complete:
-* User Mode
 * Filesystem
 * Mouse/Keyboard Drivers
 
@@ -17,4 +17,3 @@ A little x86_64 hobby OS
 Grab the latest artifact from [Github Actions](https://github.com/chocabloc/aeolos/actions)
  \
  \
-This OS uses [KiwiBoot](https://github.com/chocabloc/KiwiBoot) as the bootloader.
