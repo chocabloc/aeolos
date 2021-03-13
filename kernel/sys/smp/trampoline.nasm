@@ -1,4 +1,4 @@
-LOAD_ADDRESS        equ 0x1000
+LOAD_ADDRESS        equ 0x70000
 HIGHERHALF_OFFSET   equ 0xffffffff80000000
 AP_BOOT_COUNTER     equ 0xff0
 ARG_CPUINFO         equ 0xfe0
@@ -32,11 +32,11 @@ gdt64_ptr:
     dq LOAD_ADDRESS + gdt64_start
 
 load_gdt32:
-    lgdt [LOAD_ADDRESS + gdt32_ptr]
+    lgdt [cs:gdt32_ptr]
     mov eax, cr0
     or eax, 0x1
     mov cr0, eax
-    jmp 0x08:LOAD_ADDRESS + pmode_entry
+    jmp dword 0x08:LOAD_ADDRESS + pmode_entry
 
 bits 32
 
