@@ -5,16 +5,14 @@ A little x86_64 hobby OS
 * A framebuffer console
 * Physical Memory Manager
 * Virtual Memory Manager
-* APIC Timer
+* ACPI Tables parsing
+* APIC and HPET Timer
 * Multitasking with SMP
+* Usermode support (partial)
 
 ### Things not yet complete:
-* User Mode
 * Filesystem
 * Mouse/Keyboard Drivers
 
 ### To try out:
 Grab the latest artifact from [Github Actions](https://github.com/chocabloc/aeolos/actions)
- \
- \
-This OS uses [KiwiBoot](https://github.com/chocabloc/KiwiBoot) as the bootloader.
