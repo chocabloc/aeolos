@@ -47,4 +47,3 @@ finish_context_switch:
     pop %rax
 
     iretq
-

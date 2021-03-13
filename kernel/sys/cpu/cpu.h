@@ -23,7 +23,7 @@
 
 #define port_inb(port, n) asm volatile("movw %1, %%dx;" \
                                        "in %%dx, %%al;" \
-                                       "mov %%al, %0"   \
+                                       "movb %%al, %0"  \
                                        : "=g"(*(n))     \
                                        : "g"(port)      \
                                        : "al");

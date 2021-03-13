@@ -20,7 +20,7 @@ typedef volatile struct {
             "jc 1b;"                                            \
             "2:"                                                \
             "pop %[flags]"                                      \
-            : [lock] "=g"((s)->lock), [flags] "=g"((s)->rflags) \
+            : [lock] "=m"((s)->lock), [flags] "=m"((s)->rflags) \
             :                                                   \
             : "memory", "cc");                                  \
     }
@@ -30,8 +30,8 @@ typedef volatile struct {
         asm volatile("push %[flags];"           \
                      "lock btr $0, %[lock];"    \
                      "popfq;"                   \
-                     : [lock] "=g"((s)->lock)   \
-                     : [flags] "g"((s)->rflags) \
+                     : [lock] "=m"((s)->lock)   \
+                     : [flags] "m"((s)->rflags) \
                      : "memory", "cc");         \
     }
 

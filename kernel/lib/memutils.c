@@ -8,7 +8,7 @@ void memcpy(void* src, void* target, uint64_t len)
                  "rep movsb;"
                  :
                  : [len] "g"(len), [src] "g"(src), [tgt] "g"(target)
-                 : "memory");
+                 : "memory", "rcx", "rsi", "rdi");
 }
 
 void memset(void* addr, uint8_t val, uint64_t len)

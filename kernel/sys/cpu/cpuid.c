@@ -9,8 +9,8 @@ void cpuid(uint32_t func, uint32_t param, uint32_t* eax, uint32_t* ebx, uint32_t
                  "mov %%ebx, %[iebx];"
                  "mov %%ecx, %[iecx];"
                  "mov %%edx, %[iedx];"
-                 : [ ieax ] "=g"(*eax), [ iebx ] "=g"(*ebx), [ iecx ] "=g"(*ecx), [ iedx ] "=g"(*edx)
-                 : [ func ] "g"(func), [ param ] "g"(param)
+                 : [ieax] "=g"(*eax), [iebx] "=g"(*ebx), [iecx] "=g"(*ecx), [iedx] "=g"(*edx)
+                 : [func] "g"(func), [param] "g"(param)
                  : "%eax", "%ebx", "%ecx", "%edx", "memory");
 }
 

@@ -1,7 +1,7 @@
 #include "idt.h"
 #include "isrs.h"
-#include "panic.h"
 #include "klog.h"
+#include "panic.h"
 #include <stdint.h>
 
 static struct idt_entry IDT[256];

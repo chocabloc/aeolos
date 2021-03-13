@@ -13,29 +13,31 @@ KERNELOBJ = kernel.elf
 TRAMPOLINEBLOB = sys/smp/trampoline.bin
 
 # toolchain flags and settings
-CC = clang-10
-LD = clang-10
-AS = clang-10
+CC = gcc-10
+LD = gcc-10
+AS = gcc-10
 NASM = nasm
 CFLAGS = -ffreestanding \
+		 -fno-omit-frame-pointer \
+		 -fno-pic \
+		 -flto \
 		 -mcmodel=kernel \
 		 -mno-red-zone \
+		 -mno-80387 \
 		 -mno-mmx \
 		 -mno-sse \
 		 -mno-sse2 \
 		 -Wall \
-		 -Wextra \
 		 -Ofast \
-		 -flto \
-		 -fno-omit-frame-pointer \
 		 -I . \
 		 -I lib
 ASFLAGS = -I . -flto
-LINKFLAGS = -Wl,-T$(LINKSCRIPT) \
+LINKFLAGS = -T$(LINKSCRIPT) \
     	    -nostdlib \
+			-Wno-lto-type-mismatch \
 			-z max-page-size=0x1000 \
 			-flto \
-			-fuse-ld=lld-10
+			-no-pie
 
 # rules
 .PHONY: clean kernel

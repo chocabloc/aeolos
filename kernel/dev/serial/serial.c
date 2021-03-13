@@ -4,9 +4,11 @@
 void serial_init()
 {
     uint16_t divisor = 115200 / 9600;
+    uint8_t divlow = divisor & 0xFF;
+    uint8_t divhigh = divisor >> 8;
     port_outb(0x3fb, 0x80);
-    port_outb(0x3f8, divisor & 0x00FF);
-    port_outb(0x3f9, divisor >> 8);
+    port_outb(0x3f8, divlow);
+    port_outb(0x3f9, divhigh);
     port_outb(0x3fb, 0x03);
     port_outb(0x3fa, 0xC7);
     port_outb(0x3fc, 0x03);

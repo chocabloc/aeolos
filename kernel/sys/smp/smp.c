@@ -14,7 +14,7 @@
 #include <stddef.h>
 
 // smp trampoline code to be executed by AP's
-extern void smp_trampoline_blob_start, smp_trampoline_blob_end;
+extern uint8_t smp_trampoline_blob_start, smp_trampoline_blob_end;
 
 // counter to be incremented upon successful AP boot
 static volatile int* ap_boot_counter = (volatile int*)PHYS_TO_VIRT(SMP_AP_BOOT_COUNTER_ADDR);
