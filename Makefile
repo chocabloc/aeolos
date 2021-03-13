@@ -6,7 +6,9 @@ QEMUFLAGS =	-m 4096 \
 			-no-shutdown \
 			-enable-kvm \
 			-cpu qemu64,+avx \
-			-smp 4
+			-smp 4 \
+			-bios /usr/share/ovmf/OVMF.fd \
+			-d int
 
 KERNELDIR = kernel
 IMAGEDIR = image

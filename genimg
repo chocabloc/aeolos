@@ -1,17 +1,18 @@
 #!/bin/bash
 
-# create the image file if it doesn't exist
-#if ! test -f "os.img"; then
-dd of=os.img if=/dev/zero bs=1M count=64 status=none
-#fi
+# create and format the image file, if it doesn't exist
+if ! test -f "os.img"; then
+	dd of=os.img if=/dev/zero bs=1M count=33 status=none
+fi
 
-parted -s os.img mklabel msdos
-parted -s os.img mkpart primary 1 100%
-parted -s os.img set 1 boot on
+# format the image as FAT32 with size 33MB
+mformat -F -h 64 -s 32 -t 33 -c 1 -i os.img ::
 
-./tools/echfs-utils -m -p0 os.img quick-format 32768
-./tools/echfs-utils -m -p0 os.img import ./image/limine.cfg limine.cfg
-./tools/echfs-utils -m -p0 os.img import ./image/kernel.elf kernel.elf
+# make the directories
+mmd -D s -i os.img ::/EFI
+mmd -D s -i os.img ::/EFI/BOOT
 
-./tools/limine-install os.img
-
+# copy the required files
+mcopy -D o -i os.img image/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT
+mcopy -D o -i os.img image/limine.cfg ::
+mcopy -D o -i os.img image/kernel.elf ::
