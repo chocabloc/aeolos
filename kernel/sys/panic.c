@@ -3,6 +3,7 @@
 #include "dev/term/term.h"
 #include "klog.h"
 #include "lock.h"
+#include "mm/mm.h"
 #include "symbols.h"
 #include "sys/pit.h"
 #include <stdarg.h>
@@ -36,6 +37,10 @@ static void do_stacktrace()
                  : "=rm"(rbp_val));
 
     klog_printf("\nStack Trace:\n");
+    if ((uint64_t)rbp_val <= HIGHERHALF_OFFSET) {
+        klog_printf("\n \t<optimised out>");
+        return;
+    }
     for (int i = 0;; i++) {
         klog_printf(" \t%d: ", i);
         uint64_t func_addr = *(rbp_val + 1);
