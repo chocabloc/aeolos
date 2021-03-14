@@ -29,7 +29,6 @@ CFLAGS = -ffreestanding \
 		 -mno-sse2 \
 		 -Wall \
 		 -Ofast \
-		 -flto \
 		 -I . \
 		 -I lib
 ASFLAGS = -I . -flto
