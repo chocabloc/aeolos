@@ -19,5 +19,5 @@ jobs:
       run: make
     - uses: actions/upload-artifact@v2
       with:
-        name: os.img
-        path: os.img
+        name: os.iso
+        path: os.iso

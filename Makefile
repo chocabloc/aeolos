@@ -11,26 +11,20 @@ QEMUFLAGS =	-m 4096 \
 			-d int
 
 KERNELDIR = kernel
-IMAGEDIR = image
+KERNELFILE = kernel/kernel.elf
+IMAGEFILE = os.iso
 
-KERNELFILE = kernel.elf
-IMAGEFILE = os.img
+.PHONY: run $(IMAGEFILE) $(KERNELFILE) clean
 
-.PHONY: run $(IMAGEFILE) $(KERNELDIR)/$(KERNELFILE) clean
-
-$(IMAGEFILE): $(IMAGEDIR)/$(KERNELFILE)
+$(IMAGEFILE): $(KERNELFILE)
 	@echo Generating Hard Disk Image...
 	@$(GENIMG)
 
 run: $(IMAGEFILE)
 	@echo Testing image in QEMU...
-	@$(QEMU) $(IMAGEFILE) $(QEMUFLAGS)
-
-$(IMAGEDIR)/$(KERNELFILE) : $(KERNELDIR)/$(KERNELFILE)
-	@echo Copying kernel...
-	@cp $< $@
+	@$(QEMU) -cdrom $(IMAGEFILE) $(QEMUFLAGS)
 	
-$(KERNELDIR)/$(KERNELFILE): 
+$(KERNELFILE): 
 	@echo Building kernel...
 	@$(MAKE) -C $(KERNELDIR)
 
