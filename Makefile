@@ -6,9 +6,7 @@ QEMUFLAGS =	-m 4096 \
 			-no-shutdown \
 			-enable-kvm \
 			-cpu qemu64,+avx \
-			-smp 4 \
-			-bios /usr/share/ovmf/OVMF.fd \
-			-d int
+			-smp 4
 
 KERNELDIR = kernel
 KERNELFILE = kernel/kernel.elf
