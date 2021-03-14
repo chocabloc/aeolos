@@ -1,81 +1,136 @@
-// The Virtual Memory Manager (some rough edges)
-
 #include "vmm.h"
 #include "dev/fb/fb.h"
 #include "klog.h"
+#include "kmalloc.h"
 #include "memutils.h"
 #include "mm/pmm.h"
 #include "sys/cpu/cpu.h"
 #include "sys/cpu/cpuid.h"
 #include "sys/panic.h"
 
-extern void kernel_start;
-extern void kernel_end;
+#define MAKE_TABLE_ENTRY(address, flags) ((address & ~(0xfff)) | flags)
 
-static uint64_t PML4[512] __attribute__((aligned(PAGE_SIZE)));
+static addrspace_t kaddrspace;
 
-static uint64_t make_table_entry(uint64_t address, uint64_t flags)
+static void map_page(addrspace_t* addrspace, uint64_t vaddr, uint64_t paddr, uint64_t flags)
 {
-    return ((address >> 12) << 12) | flags;
-}
+    uint16_t pte = (vaddr >> 12) & 0x1ff;
+    uint16_t pde = (vaddr >> 21) & 0x1ff;
+    uint16_t pdpe = (vaddr >> 30) & 0x1ff;
+    uint16_t pml4e = (vaddr >> 39) & 0x1ff;
 
-/*
- * Recursive algorithm to map a page of memory
- * Can probably be done in a better way
- */
-static void _vmm_map_rec(uint64_t* table, uint64_t virtaddr, uint64_t physaddr, int plevel, uint64_t flags)
-{
-    // clear the pat flag if set, since it only applies to pt entries
-    bool pat = false;
-    uint64_t nflags = flags;
-    if (nflags & FLAG_USE_PAT) {
-        nflags &= ~(FLAG_USE_PAT);
-        pat = true;
+    uint64_t* pml4 = addrspace->PML4;
+    uint64_t* pdpt;
+    uint64_t* pd;
+    uint64_t* pt;
+
+    pdpt = (uint64_t*)PHYS_TO_VIRT(pml4[pml4e] & ~(0xfff));
+    if (!(pml4[pml4e] & VMM_FLAG_PRESENT)) {
+        pdpt = (uint64_t*)PHYS_TO_VIRT(pmm_get(1));
+        memset(pdpt, 0, PAGE_SIZE);
+        pml4[pml4e] = MAKE_TABLE_ENTRY(VIRT_TO_PHYS(pdpt), VMM_FLAGS_USERMODE);
     }
 
-    uint64_t shiftamt = (12 + (9 * plevel));
-    uint64_t mask = 0x1FFULL << shiftamt;
-    uint64_t index = (virtaddr & mask) >> shiftamt;
+    pd = (uint64_t*)PHYS_TO_VIRT(pdpt[pdpe] & ~(0xfff));
+    if (!(pdpt[pdpe] & VMM_FLAG_PRESENT)) {
+        pd = (uint64_t*)PHYS_TO_VIRT(pmm_get(1));
+        memset(pd, 0, PAGE_SIZE);
+        pdpt[pdpe] = MAKE_TABLE_ENTRY(VIRT_TO_PHYS(pd), VMM_FLAGS_USERMODE);
+    }
 
-    if (plevel == 0) {
-        // set the pat flag if pat is to be used
-        nflags |= pat ? FLAG_USE_PAT : 0;
-        table[index] = make_table_entry(physaddr, nflags);
+    pt = (uint64_t*)PHYS_TO_VIRT(pd[pde] & ~(0xfff));
+    if (!(pd[pde] & VMM_FLAG_PRESENT)) {
+        pt = (uint64_t*)PHYS_TO_VIRT(pmm_get(1));
+        memset(pt, 0, PAGE_SIZE);
+        pd[pde] = MAKE_TABLE_ENTRY(VIRT_TO_PHYS(pt), VMM_FLAGS_USERMODE);
+    }
+
+    pt[pte] = MAKE_TABLE_ENTRY(paddr & ~(0xfff), flags);
+
+    uint64_t cr3val;
+    read_cr("cr3", &cr3val);
+    if (cr3val == (uint64_t)(addrspace->PML4))
+        asm volatile("invlpg (%0)" ::"r"(vaddr));
+}
+
+static void unmap_page(addrspace_t* addrspace, uint64_t vaddr)
+{
+    uint16_t pte = (vaddr >> 12) & 0x1ff;
+    uint16_t pde = (vaddr >> 21) & 0x1ff;
+    uint16_t pdpe = (vaddr >> 30) & 0x1ff;
+    uint16_t pml4e = (vaddr >> 39) & 0x1ff;
+
+    uint64_t* pml4 = addrspace->PML4;
+    if (!(pml4[pml4e] & VMM_FLAG_PRESENT))
         return;
-    }
 
-    uint64_t* newtable;
-    if (!(table[index] & FLAG_PRESENT)) {
-        newtable = (uint64_t*)PHYS_TO_VIRT(pmm_get(1));
-        memset(newtable, 0, PAGE_SIZE);
+    uint64_t* pdpt = (uint64_t*)PHYS_TO_VIRT(pml4[pml4e] & ~(0x1ff));
+    if (!(pdpt[pdpe] & VMM_FLAG_PRESENT))
+        return;
 
-        table[index] = make_table_entry(VIRT_TO_PHYS((uint64_t)newtable), nflags);
-    } else
-        newtable = (uint64_t*)PHYS_TO_VIRT(((table[index] >> 12) << 12));
+    uint64_t* pd = (uint64_t*)PHYS_TO_VIRT(pdpt[pdpe] & ~(0x1ff));
+    if (!(pd[pde] & VMM_FLAG_PRESENT))
+        return;
 
-    _vmm_map_rec(newtable, virtaddr, physaddr, plevel - 1, flags);
+    uint64_t* pt = (uint64_t*)PHYS_TO_VIRT(pd[pde] & ~(0x1ff));
+    if (!(pt[pte] & VMM_FLAG_PRESENT))
+        return;
+
+    pt[pte] = 0;
+
+    uint64_t cr3val;
+    read_cr("cr3", &cr3val);
+    if (cr3val == (uint64_t)(addrspace->PML4))
+        asm volatile("invlpg (%0)" ::"r"(vaddr));
+
+    for (int i = 0; i < 512; i++)
+        if (pt[i] != 0)
+            goto done;
+    pd[pde] = 0;
+    pmm_free(VIRT_TO_PHYS(pt), 1);
+
+    for (int i = 0; i < 512; i++)
+        if (pd[i] != 0)
+            goto done;
+    pdpt[pdpe] = 0;
+    pmm_free(VIRT_TO_PHYS(pd), 1);
+
+    for (int i = 0; i < 512; i++)
+        if (pdpt[i] != 0)
+            goto done;
+    pml4[pml4e] = 0;
+    pmm_free(VIRT_TO_PHYS(pdpt), 1);
+
+done:
+    return;
 }
 
-// maps virtual memory to physical (wrapper around _vmm_map_rec)
-void vmm_map(uint64_t virtaddr, uint64_t physaddr, uint64_t numpages, uint64_t flags)
+void vmm_unmap(addrspace_t* addrspace, uint64_t vaddr, uint64_t np)
 {
-    for (uint64_t i = 0; i < numpages * PAGE_SIZE; i += PAGE_SIZE)
-        _vmm_map_rec(PML4, virtaddr + i, physaddr + i, 3, flags);
+    addrspace_t* as = addrspace ? addrspace : &kaddrspace;
+    for (size_t i = 0; i < np * PAGE_SIZE; i += PAGE_SIZE)
+        unmap_page(as, vaddr + i);
+}
+
+void vmm_map(addrspace_t* addrspace, uint64_t vaddr, uint64_t paddr, uint64_t np, uint64_t flags)
+{
+    addrspace_t* as = addrspace ? addrspace : &kaddrspace;
+    for (size_t i = 0; i < np * PAGE_SIZE; i += PAGE_SIZE)
+        map_page(as, vaddr + i, paddr + i, flags);
 }
 
 // Create own paging structures, as the ones provided by the bootloader cannot be relied on
 void vmm_init()
 {
-    klog_info("Identity mapping first 1MB of memory...\n");
-    vmm_map(0, 0, NUM_PAGES(0x100000), FLAG_DEFAULT);
+    // create the kernel address space
+    kaddrspace.PML4 = kmalloc(PAGE_SIZE);
+    memset(kaddrspace.PML4, 0, PAGE_SIZE);
 
     klog_info("Mapping lower 2GB of memory to 0xFFFFFFFF80000000...\n");
-    vmm_map(HIGHERHALF_OFFSET, 0, NUM_PAGES(0x80000000), FLAG_DEFAULT | FLAG_USER);
+    vmm_map(&kaddrspace, 0xffffffff80000000, 0, NUM_PAGES(0x80000000), VMM_FLAGS_DEFAULT);
 
     klog_info("Mapping all memory to 0xFFFF800000000000...\n");
-    vmm_map(MEM_VIRT_OFFSET, 0, NUM_PAGES(pmm_get_mem_info()->phys_limit), FLAG_DEFAULT | FLAG_USER);
+    vmm_map(&kaddrspace, 0xffff800000000000, 0, NUM_PAGES(pmm_get_mem_info()->phys_limit), VMM_FLAGS_DEFAULT);
 
-    // update cr3
-    write_cr("cr3", (uint64_t)&PML4 - HIGHERHALF_OFFSET);
-    klog_ok("VMM initialized\n");
+    write_cr("cr3", VIRT_TO_PHYS(kaddrspace.PML4));
 }

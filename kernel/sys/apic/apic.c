@@ -44,7 +44,7 @@ void apic_enable()
 void apic_init()
 {
     lapic_base = (void*)PHYS_TO_VIRT(madt_get_lapic_base());
-    vmm_map((uint64_t)lapic_base, VIRT_TO_PHYS(lapic_base), 1, FLAG_PRESENT | FLAG_READWRITE | FLAG_CACHE_DISABLE);
+    vmm_map(NULL, (uint64_t)lapic_base, VIRT_TO_PHYS(lapic_base), 1, VMM_FLAGS_MMIO);
 
     // initialize the spurious interrupt register
     idt_set_handler(APIC_SPURIOUS_VECTOR_NUM, spurious_int_handler);

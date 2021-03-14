@@ -3,6 +3,7 @@
 #include "memutils.h"
 #include "mm/mm.h"
 #include <stdbool.h>
+#include <stddef.h>
 
 static fb_info fb;
 
@@ -36,7 +37,7 @@ void fb_init(stv2_struct_tag_fb* t)
      * also use write-combining cache (using PAT)
     */
     uint64_t fbsize = NUM_PAGES(fb.pitch * (fb.height + 16));
-    vmm_map((uint64_t)fb.addr, VIRT_TO_PHYS(fb.addr), fbsize, FLAG_DEFAULT | FLAG_USE_PAT);
+    vmm_map(NULL, (uint64_t)fb.addr, VIRT_TO_PHYS(fb.addr), fbsize, VMM_FLAGS_DEFAULT | VMM_FLAG_WRITECOMBINE);
 
     // initialize double buffering
     backbuffer = kmalloc(fb.pitch * fb.height);

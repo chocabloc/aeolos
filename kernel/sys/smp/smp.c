@@ -84,6 +84,9 @@ static void prepare_trampoline()
 
 void smp_init()
 {
+    // identity map 1st mb for the trampoline
+    vmm_map(NULL, 0, 0, NUM_PAGES(0x100000), VMM_FLAGS_DEFAULT);
+
     prepare_trampoline();
 
     // get lapic info from the madt
@@ -154,4 +157,7 @@ void smp_init()
     }
 
     klog_ok("SMP initialized. %d processors detected\n", info.num_cpus);
+
+    // identity mapping is no longer needed
+    vmm_unmap(NULL, 0, NUM_PAGES(0x100000));
 }

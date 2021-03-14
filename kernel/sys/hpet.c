@@ -39,7 +39,7 @@ void hpet_init()
 
     // map the hpet registers
     uint64_t hpet_phys = hpet_sdt->base_addr.address;
-    vmm_map(PHYS_TO_VIRT(hpet_phys), hpet_phys, 1, FLAG_PRESENT | FLAG_READWRITE | FLAG_CACHE_DISABLE);
+    vmm_map(NULL, PHYS_TO_VIRT(hpet_phys), hpet_phys, 1, VMM_FLAGS_MMIO);
     hpet_regs = (void*)PHYS_TO_VIRT(hpet_phys);
 
     // get time period in nanoseconds

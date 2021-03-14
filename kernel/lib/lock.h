@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 typedef volatile struct {
     int lock;
     uint64_t rflags;
