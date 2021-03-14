@@ -1,18 +1,26 @@
 #!/bin/bash
 
-# create and format the image file, if it doesn't exist
-if ! test -f "os.img"; then
-	dd of=os.img if=/dev/zero bs=1M count=33 status=none
+KERNEL="kernel/kernel.elf"
+CD_UEFI_IMG="image/boot/limine-efi.bin"
+
+# copy the kernel
+cp $KERNEL image/boot/kernel.elf
+
+# create and format the uefi image file, if it doesn't exist
+if ! test -f $CD_UEFI_IMG; then
+	dd if=/dev/zero of=$CD_UEFI_IMG bs=1k count=1440
 fi
+mformat -i $CD_UEFI_IMG -f 1440 ::
+mmd -D s -i $CD_UEFI_IMG ::/EFI
+mmd -D s -i $CD_UEFI_IMG ::/EFI/BOOT
+mcopy -D o -i $CD_UEFI_IMG image/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT
 
-# format the image as FAT32 with size 33MB
-mformat -F -h 64 -s 32 -t 33 -c 1 -i os.img ::
-
-# make the directories
-mmd -D s -i os.img ::/EFI
-mmd -D s -i os.img ::/EFI/BOOT
-
-# copy the required files
-mcopy -D o -i os.img image/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT
-mcopy -D o -i os.img image/limine.cfg ::
-mcopy -D o -i os.img image/kernel.elf ::
+# build the iso
+xorriso -as mkisofs \
+  -b boot/limine-cd \
+  -no-emul-boot -boot-load-size 4 -boot-info-table \
+  -eltorito-alt-boot \
+  -e boot/limine-efi.bin \
+  -no-emul-boot -isohybrid-gpt-basdat \
+  image \
+  -o os.iso

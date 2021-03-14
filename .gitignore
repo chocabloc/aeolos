@@ -3,6 +3,7 @@
 *.elf
 *.vdi
 *.sym
+*.iso
 *.bin
 *.gen
 .vscode/*
