@@ -13,7 +13,7 @@
 
 #define TIMESLICE_DEFAULT MILLIS_TO_NANOS(1)
 
-static spinlock_t sched_lock;
+static lock_t sched_lock;
 
 // an idle task for each cpu
 static task_t* tasks_idle[CPU_MAX];

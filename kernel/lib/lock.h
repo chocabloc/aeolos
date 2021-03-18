@@ -5,7 +5,7 @@
 typedef volatile struct {
     int lock;
     uint64_t rflags;
-} spinlock_t;
+} lock_t;
 
 #define spinlock_take(s)                                        \
     {                                                           \
@@ -35,15 +35,4 @@ typedef volatile struct {
                      : [lock] "=m"((s)->lock)   \
                      : [flags] "m"((s)->rflags) \
                      : "memory", "cc");         \
-    }
-
-#define spinlock_take_noirq(s)                                    \
-    {                                                             \
-        while (!__sync_bool_compare_and_swap(&((s)->lock), 0, 1)) \
-            asm volatile("pause");                                \
-    }
-
-#define spinlock_release_noirq(s) \
-    {                             \
-        (s)->lock = 0;            \
     }

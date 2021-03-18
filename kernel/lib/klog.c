@@ -10,7 +10,7 @@ static uint8_t log_buff[KLOG_BUFF_LEN];
 static uint16_t log_start = 0;
 static uint16_t log_end = 0;
 
-static spinlock_t log_lock;
+static lock_t log_lock;
 
 static void putch(uint8_t i)
 {

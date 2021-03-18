@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-static spinlock_t panic_lock;
+static lock_t panic_lock;
 
 __attribute__((interrupt)) static void halt(void* v __attribute__((unused)))
 {

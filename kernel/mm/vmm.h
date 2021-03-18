@@ -21,7 +21,7 @@
 
 typedef struct {
     uint64_t* PML4;
-    spinlock_t lock;
+    lock_t lock;
 } addrspace_t;
 
 void vmm_init();
