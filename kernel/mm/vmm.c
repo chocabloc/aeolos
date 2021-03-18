@@ -49,7 +49,7 @@ static void map_page(addrspace_t* addrspace, uint64_t vaddr, uint64_t paddr, uin
 
     uint64_t cr3val;
     read_cr("cr3", &cr3val);
-    if (cr3val == (uint64_t)(addrspace->PML4))
+    if (cr3val == (uint64_t)(VIRT_TO_PHYS(addrspace->PML4)))
         asm volatile("invlpg (%0)" ::"r"(vaddr));
 }
 
@@ -80,7 +80,7 @@ static void unmap_page(addrspace_t* addrspace, uint64_t vaddr)
 
     uint64_t cr3val;
     read_cr("cr3", &cr3val);
-    if (cr3val == (uint64_t)(addrspace->PML4))
+    if (cr3val == (uint64_t)(VIRT_TO_PHYS(addrspace->PML4)))
         asm volatile("invlpg (%0)" ::"r"(vaddr));
 
     for (int i = 0; i < 512; i++)
