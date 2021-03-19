@@ -49,8 +49,8 @@ static void sched_janitor(tid_t tid __attribute__((unused)))
         lock_wait(&sched_lock);
         task_t* t;
         while ((t = tq_pop_back(&tasks_dead))) {
-            kmfree(t->kstack_limit, KSTACK_SIZE);
-            kmfree(t, sizeof(task_t));
+            kmfree(t->kstack_limit);
+            kmfree(t);
         }
         lock_release(&sched_lock);
         sched_sleep(SECONDS_TO_NANOS(1));

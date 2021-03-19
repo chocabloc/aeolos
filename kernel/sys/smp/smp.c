@@ -149,7 +149,7 @@ void smp_init()
 
         if (!success) {
             klog_printf(" Failed\n");
-            kmfree(stack, PAGE_SIZE);
+            kmfree(stack);
         } else {
             info.cpus[info.num_cpus].is_bsp = false;
             info.num_cpus++;
