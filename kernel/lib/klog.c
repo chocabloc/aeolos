@@ -72,10 +72,10 @@ static void klogdisplayd(tid_t tid __attribute__((unused)))
 
     while (true) {
         term_clear();
-        spinlock_take(&log_lock);
+        lock_wait(&log_lock);
         for (uint16_t i = log_end - numchars; i != log_end; i++)
             term_putchar(log_buff[i]);
-        spinlock_release(&log_lock);
+        lock_release(&log_lock);
         term_flush();
     }
 }
@@ -117,45 +117,45 @@ static void vprintf(const char* s, va_list args)
 
 void klog_putchar(uint8_t i)
 {
-    spinlock_take(&log_lock);
+    lock_wait(&log_lock);
     putch(i);
-    spinlock_release(&log_lock);
+    lock_release(&log_lock);
 }
 
 void klog_puts(const char* s)
 {
-    spinlock_take(&log_lock);
+    lock_wait(&log_lock);
     puts(s);
-    spinlock_release(&log_lock);
+    lock_release(&log_lock);
 }
 
 void klog_putsn(const char* s, uint64_t len)
 {
-    spinlock_take(&log_lock);
+    lock_wait(&log_lock);
     putsn(s, len);
-    spinlock_release(&log_lock);
+    lock_release(&log_lock);
 }
 
 void klog_vprintf(const char* s, va_list args)
 {
-    spinlock_take(&log_lock);
+    lock_wait(&log_lock);
     vprintf(s, args);
-    spinlock_release(&log_lock);
+    lock_release(&log_lock);
 }
 
 void klog_printf(const char* s, ...)
 {
-    spinlock_take(&log_lock);
+    lock_wait(&log_lock);
     va_list args;
     va_start(args, s);
     vprintf(s, args);
     va_end(args);
-    spinlock_release(&log_lock);
+    lock_release(&log_lock);
 }
 
 void klog(loglevel_t lvl, const char* s, ...)
 {
-    spinlock_take(&log_lock);
+    lock_wait(&log_lock);
     switch (lvl) {
     case LOG_SUCCESS:
         puts("\033[32;1m[OKAY] \033[0m");
@@ -174,7 +174,7 @@ void klog(loglevel_t lvl, const char* s, ...)
     va_start(args, s);
     vprintf(s, args);
     va_end(args);
-    spinlock_release(&log_lock);
+    lock_release(&log_lock);
 }
 
 void klog_show()

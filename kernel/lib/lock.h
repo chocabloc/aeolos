@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef volatile struct {
@@ -7,7 +8,13 @@ typedef volatile struct {
     uint64_t rflags;
 } lock_t;
 
-#define spinlock_take(s)                                        \
+typedef volatile struct {
+    int num_readers;
+    lock_t nrlock;
+    lock_t wlock;
+} rwlock_t;
+
+#define lock_wait(s)                                            \
     {                                                           \
         asm volatile(                                           \
             "pushfq;"                                           \
@@ -27,7 +34,7 @@ typedef volatile struct {
             : "memory", "cc");                                  \
     }
 
-#define spinlock_release(s)                     \
+#define lock_release(s)                         \
     {                                           \
         asm volatile("push %[flags];"           \
                      "lock btr $0, %[lock];"    \
@@ -36,3 +43,10 @@ typedef volatile struct {
                      : [flags] "m"((s)->rflags) \
                      : "memory", "cc");         \
     }
+
+#define lock_try(s) __sync_bool_compare_and_swap(&((s)->lock), 0, 1)
+
+bool rwlock_try_read(rwlock_t* l);
+void rwlock_end_read(rwlock_t* l);
+bool rwlock_try_write(rwlock_t* l);
+void rwlock_end_write(rwlock_t* l);

@@ -46,13 +46,13 @@ static void idle(tid_t tid __attribute__((unused)))
 static void sched_janitor(tid_t tid __attribute__((unused)))
 {
     while (true) {
-        spinlock_take(&sched_lock);
+        lock_wait(&sched_lock);
         task_t* t;
         while ((t = tq_pop_back(&tasks_dead))) {
             kmfree(t->kstack_limit, KSTACK_SIZE);
             kmfree(t, sizeof(task_t));
         }
-        spinlock_release(&sched_lock);
+        lock_release(&sched_lock);
         sched_sleep(SECONDS_TO_NANOS(1));
     }
 }
@@ -81,7 +81,7 @@ void _do_context_switch(task_state_t* state)
 {
     static uint64_t ticks = 0;
 
-    spinlock_take(&sched_lock);
+    lock_wait(&sched_lock);
     uint16_t cpu = smp_get_current_info()->cpu_id;
 
     // save state of current task, if there is one
@@ -147,7 +147,7 @@ chosen : {
     smp_get_current_info()->tss.rsp0 = (uint64_t)(next->kstack_limit + KSTACK_SIZE);
     ticks++;
     apic_send_eoi();
-    spinlock_release(&sched_lock);
+    lock_release(&sched_lock);
     finish_context_switch(next);
 }
 }
@@ -160,7 +160,7 @@ void sched_sleep(timeval_t nanos)
         goto done;
     }
 
-    spinlock_take(&sched_lock);
+    lock_wait(&sched_lock);
     task_t* curr = tasks_running[smp_get_current_info()->cpu_id];
     curr->wakeuptime = hpet_get_nanos() + nanos;
     curr->status = TASK_SLEEPING;
@@ -178,7 +178,7 @@ void sched_sleep(timeval_t nanos)
             }
         }
     }
-    spinlock_release(&sched_lock);
+    lock_release(&sched_lock);
     asm volatile("hlt");
 
 done:
@@ -187,11 +187,11 @@ done:
 
 void sched_die()
 {
-    spinlock_take(&sched_lock);
+    lock_wait(&sched_lock);
     task_t* curr = tasks_running[smp_get_current_info()->cpu_id];
     curr->status = TASK_DEAD;
     tq_push_front(&tasks_dead, curr);
-    spinlock_release(&sched_lock);
+    lock_release(&sched_lock);
 
     // wait for scheduler
     asm volatile("hlt");
@@ -199,9 +199,9 @@ void sched_die()
 
 bool sched_add(task_t* t)
 {
-    spinlock_take(&sched_lock);
+    lock_wait(&sched_lock);
     bool ret = add_task(t);
-    spinlock_release(&sched_lock);
+    lock_release(&sched_lock);
     return ret;
 }
 

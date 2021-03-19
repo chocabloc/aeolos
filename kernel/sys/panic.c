@@ -58,7 +58,7 @@ static void do_stacktrace()
 __attribute__((noreturn)) void kernel_panic(const char* s, ...)
 {
     asm volatile("cli");
-    spinlock_take(&panic_lock);
+    lock_wait(&panic_lock);
 
     // stop other cores
     apic_timer_set_handler(halt);
