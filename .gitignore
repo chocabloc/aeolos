@@ -5,6 +5,8 @@
 *.sym
 *.iso
 *.bin
+*.sys
+*.EFI
 *.gen
 .vscode/*
 .vscode

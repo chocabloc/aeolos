@@ -1,23 +1,22 @@
 #!/bin/bash
 
 KERNEL="kernel/kernel.elf"
-CD_UEFI_IMG="image/boot/limine-efi.bin"
+
+# copy limine files
+cp -n thirdparty/limine-bin/limine.sys image/boot/limine.sys
+cp -n thirdparty/limine-bin/limine-cd.bin image/boot/limine-cd.bin
+cp -n thirdparty/limine-bin/limine-eltorito-efi.bin image/boot/limine-efi.bin
+cp -n thirdparty/limine-bin/BOOTX64.EFI image/EFI/BOOT/BOOTX64.EFI
 
 # copy the kernel
 cp $KERNEL image/boot/kernel.elf
 
-# create and format the uefi image file, if it doesn't exist
-if ! test -f $CD_UEFI_IMG; then
-	dd if=/dev/zero of=$CD_UEFI_IMG bs=1k count=1440
-fi
-mformat -i $CD_UEFI_IMG -f 1440 ::
-mmd -D s -i $CD_UEFI_IMG ::/EFI
-mmd -D s -i $CD_UEFI_IMG ::/EFI/BOOT
-mcopy -D o -i $CD_UEFI_IMG image/EFI/BOOT/BOOTX64.EFI ::/EFI/BOOT
-
 # build the iso
 xorriso -as mkisofs \
-  -b boot/limine-cd \
+  -J -joliet-long \
+  -rock \
+  -b boot/limine-cd.bin \
+  -c boot/limine-cd.cat \
   -no-emul-boot -boot-load-size 4 -boot-info-table \
   -eltorito-alt-boot \
   -e boot/limine-efi.bin \

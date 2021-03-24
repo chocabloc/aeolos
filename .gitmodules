@@ -1,0 +1,3 @@
+[submodule "thirdparty/limine-bin"]
+	path = thirdparty/limine-bin
+	url = https://github.com/limine-bootloader/limine
