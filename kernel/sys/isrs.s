@@ -58,19 +58,7 @@ idt_load:
 	mov $\excnum, %rsi
 
 	call exc_handler
-	
-	pop %r11
-	pop %r10
-	pop %r9
-	pop %r8
-	pop %rcx
-	pop %rdx
-	pop %rsi
-	pop %rdi
-	pop %rax
-
-	pop %rbp
-	iretq
+	jmp .isr_end
 .endm
 
 .macro exc_errcode excnum
@@ -98,7 +86,10 @@ idt_load:
 	mov $\excnum, %rsi
 
 	call exc_handler
-	
+	jmp .isr_end
+.endm
+
+.isr_end:
 	pop %r11
 	pop %r10
 	pop %r9
@@ -111,7 +102,6 @@ idt_load:
 
 	pop %rbp
 	iretq
-.endm
 
 isr0:	exc_noerrcode 	0
 isr1:	exc_noerrcode 	1

@@ -37,7 +37,7 @@ static void do_stacktrace()
                  : "=rm"(rbp_val));
 
     klog_printf("\nStack Trace:\n");
-    if ((uint64_t)rbp_val <= HIGHERHALF_OFFSET) {
+    if ((uint64_t)rbp_val <= MEM_VIRT_OFFSET) {
         klog_printf("\n \t<optimised out>");
         return;
     }

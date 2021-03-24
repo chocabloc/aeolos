@@ -25,7 +25,7 @@ void* kmalloc(uint64_t size)
 void kmfree(void* addr)
 {
     struct metadata* d = (struct metadata*)((uint8_t*)addr - PAGE_SIZE);
-    pmm_free(VIRT_TO_PHYS(d), (d->numpages + 1) * PAGE_SIZE);
+    pmm_free(VIRT_TO_PHYS(d), d->numpages + 1);
 }
 
 void* kmrealloc(void* addr, size_t newsize)
@@ -36,6 +36,7 @@ void* kmrealloc(void* addr, size_t newsize)
     struct metadata* d = (struct metadata*)((uint8_t*)addr - PAGE_SIZE);
     if (NUM_PAGES(d->size) == NUM_PAGES(newsize)) {
         d->size = newsize;
+        d->numpages = NUM_PAGES(newsize);
         return addr;
     }
 

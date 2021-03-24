@@ -1,6 +1,7 @@
 #include "memutils.h"
+#include <stddef.h>
 
-void memcpy(void* src, void* target, uint64_t len)
+void memcpy(const void* src, void* target, uint64_t len)
 {
     asm volatile("mov %[len], %%rcx;"
                  "mov %[src], %%rsi;"
@@ -28,4 +29,41 @@ bool memcmp(const void* s1, const void* s2, uint64_t len)
             return false;
     }
     return true;
+}
+
+size_t strlen(const char* str)
+{
+    size_t len;
+    for (len = 0; str[len] != '\0'; len++)
+        ;
+    return len;
+}
+
+int strcmp(const char* a, const char* b)
+{
+    for (size_t i = 0;; i++) {
+        if (a[i] != b[i] || a[i] == '\0' || b[i] == '\0')
+            return a[i] - b[i];
+    }
+    return 0;
+}
+
+int strncmp(const char* a, const char* b, size_t len)
+{
+    for (size_t i = 0; i < len; i++) {
+        if (a[i] != b[i] || a[i] == '\0' || b[i] == '\0')
+            return a[i] - b[i];
+    }
+    return 0;
+}
+
+int strcpy(const char* src, char* dest)
+{
+    size_t i;
+    for (i = 0;; i++) {
+        dest[i] = src[i];
+        if (src[i] == '\0')
+            break;
+    }
+    return i;
 }
