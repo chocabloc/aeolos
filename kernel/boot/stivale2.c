@@ -1,4 +1,5 @@
 #include "stivale2.h"
+#include "klog.h"
 #include "mm/vmm.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -25,10 +26,13 @@ __attribute__((section(".stivale2hdr"), used)) static stv2_hdr header = {
 // find tag with a specific ID in a stivale2 structure
 void* stv2_find_struct_tag(stivale2_struct* s, uint64_t id)
 {
-    for (stv2_tag* t = (stv2_tag*)PHYS_TO_VIRT(s->tags); t; t = (stv2_tag*)PHYS_TO_VIRT(t->next)) {
-        if (t->identifier == id)
-            return t;
+    for (void* t = s->tags; t;) {
+        stv2_tag* tag = (stv2_tag*)PHYS_TO_VIRT(t);
+        if (tag->identifier == id)
+            return tag;
+        t = tag->next;
     }
 
+    klog_warn("stv2_find_struct_tag(): tag %x not found\n", id);
     return NULL;
 }
