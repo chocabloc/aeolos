@@ -1,4 +1,5 @@
 #include "fb.h"
+#include "klog.h"
 #include "kmalloc.h"
 #include "memutils.h"
 #include "mm/mm.h"
@@ -27,6 +28,7 @@ uint32_t fb_getpixel(uint32_t x, uint32_t y)
 // initialize framebuffer
 void fb_init(stv2_struct_tag_fb* t)
 {
+    klog_info("fb_init(): framebuffer at %x (%dx%d)\n", fb.addr, fb.width, fb.height);
     fb.addr = (uint8_t*)PHYS_TO_VIRT(t->fb_addr);
     fb.width = t->fb_width;
     fb.height = t->fb_height;
