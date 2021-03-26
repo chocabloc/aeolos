@@ -1,6 +1,7 @@
 #include "dev/fb/fb.h"
 #include "dev/serial/serial.h"
 #include "dev/term/term.h"
+#include "fs/vfs.h"
 #include "klog.h"
 #include "mm/mm.h"
 #include "proc/sched/sched.h"
@@ -56,6 +57,7 @@ void kmain(stivale2_struct* bootinfo)
     acpi_init((stv2_struct_tag_rsdp*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_RSDP_ID));
     hpet_init();
     apic_init();
+    vfs_init();
     smp_init();
 
     // since we do not need the bootloader info anymore

@@ -7,3 +7,4 @@ bool sched_add(task_t* task);
 void sched_init();
 void sched_sleep(timeval_t nanos);
 void sched_die();
+task_t* sched_get_current();

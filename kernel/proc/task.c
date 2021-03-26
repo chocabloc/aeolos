@@ -45,6 +45,7 @@ task_t* task_make(void (*entry)(tid_t), priority_t priority, tmode_t mode, void*
     ntask->last_tick = 0;
     ntask->status = TASK_READY;
     ntask->wakeuptime = 0;
+    vector_init(ntask->openfiles);
 
     curr_tid++;
     return ntask;

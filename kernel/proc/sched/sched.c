@@ -205,6 +205,11 @@ bool sched_add(task_t* t)
     return ret;
 }
 
+task_t* sched_get_current()
+{
+    return tasks_running[smp_get_current_info()->cpu_id];
+}
+
 void sched_init(void (*entry)(tid_t))
 {
     uint16_t cpu_id = smp_get_current_info()->cpu_id;
