@@ -21,7 +21,7 @@ void klog(loglevel_t lvl, const char* s, ...);
 void klog_show();
 void klog_show_urgent();
 
-#define klog_ok(s, ...) klog(LOG_SUCCESS, s, ##__VA_ARGS__)
-#define klog_info(s, ...) klog(LOG_INFO, s, ##__VA_ARGS__)
-#define klog_warn(s, ...) klog(LOG_WARN, s, ##__VA_ARGS__)
-#define klog_err(s, ...) klog(LOG_ERROR, s, ##__VA_ARGS__)
+#define klog_ok(s, ...) klog(LOG_SUCCESS, "%s(): " s, __func__, ##__VA_ARGS__)
+#define klog_info(s, ...) klog(LOG_INFO, "%s(): " s, __func__, ##__VA_ARGS__)
+#define klog_warn(s, ...) klog(LOG_WARN, "%s(): " s, __func__, ##__VA_ARGS__)
+#define klog_err(s, ...) klog(LOG_ERROR, "%s(): " s, __func__, ##__VA_ARGS__)

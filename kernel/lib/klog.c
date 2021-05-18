@@ -158,16 +158,16 @@ void klog(loglevel_t lvl, const char* s, ...)
     lock_wait(&log_lock);
     switch (lvl) {
     case LOG_SUCCESS:
-        puts("\033[32;1m[OKAY] \033[0m");
+        puts("\033[32;1m[OKAY]  \033[0m");
         break;
     case LOG_WARN:
-        puts("\033[33m[WARNING] \033[0m");
+        puts("\033[33m[WARN]  \033[0m");
         break;
     case LOG_ERROR:
         puts("\033[31;1m[ERROR] \033[0m");
         break;
     default:
-        puts("\033[34;1m[INFO] \033[0m");
+        puts("\033[34;1m[INFO]  \033[0m");
     }
 
     va_list args;

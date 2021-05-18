@@ -1,5 +1,6 @@
 #include "vfs.h"
 #include "assert.h"
+#include "common.h"
 #include "klog.h"
 #include "kmalloc.h"
 #include "lock.h"
@@ -18,22 +19,20 @@ static lock_t vfs_lock;
 // the root node
 static vfs_tnode_t root;
 
-static struct {
-    vfs_fsinfo_t* head;
-    vfs_fsinfo_t* tail;
-} fslist;
+// list of installed filesystems
+vector_new_static(vfs_fsinfo_t*, fslist);
 
 static vfs_fsinfo_t* get_fs(char* name)
 {
-    for (vfs_fsinfo_t* i = fslist.head; i; i = i->next)
-        if (strncmp(name, i->name, sizeof(i->name)) == 0)
-            return i;
+    for (int i = 0; i < fslist.len; i++)
+        if (strncmp(name, fslist.data[i]->name, sizeof(fslist.data[i]->name)) == 0)
+            return fslist.data[i];
 
-    klog_err("get_fs(): filesystem %s not found\n", name);
+    klog_err("filesystem %s not found\n", name);
     return NULL;
 }
 
-static void dumpnodes_rec(vfs_tnode_t* from, int lvl)
+static void dumpnodes_helper(vfs_tnode_t* from, int lvl)
 {
     for (int i = 0; i < 7 + lvl; i++)
         klog_putchar(' ');
@@ -41,14 +40,14 @@ static void dumpnodes_rec(vfs_tnode_t* from, int lvl)
 
     if (IS_TRAVERSABLE(from->inode))
         for (vfs_tnode_t* t = from->inode->child; t; t = t->sibling)
-            dumpnodes_rec(t, lvl + 1);
+            dumpnodes_helper(t, lvl + 1);
 }
 
 static vfs_node_desc_t* handle_to_fd(vfs_handle_t handle)
 {
     task_t* curr = sched_get_current();
     if (handle >= curr->openfiles.len || !(curr->openfiles.data[handle])) {
-        klog_err("handle_to_fd(): invalid handle %d\n", handle);
+        klog_err("invalid handle %d\n", handle);
         return NULL;
     }
     return curr->openfiles.data[handle];
@@ -56,8 +55,9 @@ static vfs_node_desc_t* handle_to_fd(vfs_handle_t handle)
 
 void vfs_debug()
 {
-    klog_info("VFS nodes dump:\n");
-    dumpnodes_rec(&root, 0);
+    klog_info("dumping nodes\n");
+    dumpnodes_helper(&root, 0);
+    klog_printf("\n");
 }
 
 // converts a path to a node, creates the node if required
@@ -71,7 +71,7 @@ static vfs_tnode_t* path_to_node(char* path, int64_t mode, vfs_node_type_t creat
 
     // we only work with absolute paths
     if (path[0] != '/') {
-        klog_err("path_to_node(): '%s' is not an absolute path\n", path);
+        klog_err("'%s' is not an absolute path\n", path);
         return NULL;
     }
     path++; // skip the leading slash
@@ -90,51 +90,49 @@ static vfs_tnode_t* path_to_node(char* path, int64_t mode, vfs_node_type_t creat
         curr_index += i + 1;
 
         // search for token in children of current node
-        bool foundnext = false;
-        if (IS_TRAVERSABLE(curr->inode)) {
-            for (vfs_tnode_t* t = curr->inode->child; t; t = t->sibling) {
-                if (strncmp(t->name, tmpbuff, sizeof(t->name)) == 0) {
-                    foundnext = true;
-                    curr = t;
-                    break;
-                }
-            }
-        }
-
-        // did not find the node, break
-        // TODO: call refresh() and try again
-        if (!foundnext) {
-            foundnode = false;
+        foundnode = false;
+        if (!IS_TRAVERSABLE(curr->inode))
             break;
+        for (vfs_tnode_t* t = curr->inode->child; t; t = t->sibling) {
+            if (strncmp(t->name, tmpbuff, sizeof(t->name)) == 0) {
+                foundnode = true;
+                curr = t;
+                break;
+            }
         }
     }
 
     // should we create the node
     if (!foundnode) {
-        if ((mode & CREATE) && (curr_index > pathlen)) {
-            // create the new tnode
-            vfs_tnode_t* new_tnode = curr->inode->fs->mknode(curr->inode, tmpbuff, create_type);
+        // only folders can contain files
+        if (!IS_TRAVERSABLE(curr->inode)) {
+            klog_err("'%s' does not reside inside a folder\n", path);
+            return NULL;
+        }
 
-            // add to list of children
+        // create the node if CREATE was specified and
+        // the node to be created is the last one in the path
+        if (mode & CREATE && curr_index > pathlen && IS_TRAVERSABLE(curr->inode)) {
+            vfs_inode_t* new_inode = vfs_alloc_inode(create_type, 0777, 0, curr->inode->fs, curr->inode->mountpoint);
+            vfs_tnode_t* new_tnode = vfs_alloc_tnode(tmpbuff, new_inode, curr->inode);
+
             if (curr->inode->child == NULL) {
                 curr->inode->child = new_tnode;
                 curr->inode->child->sibling = NULL;
-                return new_tnode;
+            } else {
+                new_tnode->sibling = curr->inode->child->sibling;
+                curr->inode->child->sibling = new_tnode;
             }
-            new_tnode->sibling = curr->inode->child->sibling;
-            curr->inode->child->sibling = new_tnode;
+            curr->inode->fs->mknode(new_tnode);
             return new_tnode;
-
-        }
-        // CREATE was not specified and node didn't exist
-        else {
-            klog_err("path_to_node(): '%s' doesn't exist\n", path);
+        } else {
+            klog_err("'%s' doesn't exist\n", path);
             return NULL;
         }
     }
     // the node should not have existed
     else if (mode & ERR_ON_EXIST) {
-        klog_err("path_to_node(): '%s' already exists\n", path);
+        klog_err("'%s' already exists\n", path);
         return NULL;
     }
 
@@ -144,14 +142,7 @@ static vfs_tnode_t* path_to_node(char* path, int64_t mode, vfs_node_type_t creat
 
 void vfs_register_fs(vfs_fsinfo_t* fs)
 {
-    if (!fslist.head) {
-        fslist.head = fs;
-        fslist.tail = fs;
-        fs->next = NULL;
-        return;
-    }
-    fs->next = fslist.head->next;
-    fslist.head->next = fs;
+    vector_push_back(&fslist, fs);
 }
 
 vfs_handle_t vfs_open(char* path, vfs_openmode_t mode)
@@ -228,7 +219,7 @@ int64_t vfs_seek(vfs_handle_t handle, size_t pos)
 
     // seek position is out of bounds and mode is read only
     if (pos >= fd->inode->size && fd->mode == VFS_MODE_READ) {
-        klog_err("vfs_seek(): seek position out of bounds\n");
+        klog_err("seek position out of bounds\n");
         return -1;
     }
 
@@ -244,7 +235,7 @@ int64_t vfs_chmod(vfs_handle_t handle, int32_t newperms)
 
     // mode is read only
     if (fd->mode == VFS_MODE_READ) {
-        klog_err("vfs_chmod(): file opened read-only\n");
+        klog_err("file opened read-only\n");
         return -1;
     }
 
@@ -270,7 +261,7 @@ int64_t vfs_mount(char* device, char* path, char* fsname)
         if (!dev)
             goto fail;
         if (dev->inode->type != VFS_NODE_BLOCK_DEVICE) {
-            klog_err("vfs_mount(): %s is not a block device\n", device);
+            klog_err("%s is not a block device\n", device);
             goto fail;
         }
     }
@@ -281,7 +272,7 @@ int64_t vfs_mount(char* device, char* path, char* fsname)
         goto fail;
     if (at->inode) {
         if (at->inode->type != VFS_NODE_FOLDER || at->inode->child) {
-            klog_err("vfs_mount(): '%s' is not an empty folder\n", path);
+            klog_err("'%s' is not an empty folder\n", path);
             goto fail;
         }
         kmfree(at->inode);
@@ -292,7 +283,7 @@ int64_t vfs_mount(char* device, char* path, char* fsname)
     at->inode->refcount = 1;
     at->inode->mountpoint = at;
 
-    klog_info("vfs_mount(): mounted %s at %s as %s\n", device ? device : "<no-device>", path, fsname);
+    klog_info("mounted %s at %s as %s\n", device ? device : "<no-device>", path, fsname);
     lock_release(&vfs_lock);
     return 0;
 fail:
@@ -310,7 +301,7 @@ int64_t vfs_read(vfs_handle_t handle, size_t len, void* buff)
     lock_wait(&vfs_lock);
     int status = fd->inode->fs->read(fd->inode, fd->file_pos, len, buff);
     if (status == -1)
-        klog_err("vfs_read(): read (%d:%d) failed\n", fd->file_pos, fd->file_pos + len);
+        klog_err("read (%d:%d) failed\n", fd->file_pos, fd->file_pos + len);
     lock_release(&vfs_lock);
 
     return status;
@@ -323,7 +314,7 @@ int64_t vfs_write(vfs_handle_t handle, size_t len, const void* buff)
         return -1;
 
     if (fd->mode == VFS_MODE_READ) {
-        klog_err("vfs_write(): file is read only\n");
+        klog_err("file is read only\n");
         return -1;
     }
 
@@ -335,7 +326,7 @@ int64_t vfs_write(vfs_handle_t handle, size_t len, const void* buff)
 
     int status = fd->inode->fs->write(fd->inode, fd->file_pos, len, buff);
     if (status == -1)
-        klog_err("vfs_write(): write (%d:%d) failed\n", fd->file_pos, fd->file_pos + len);
+        klog_err("write (%d:%d) failed\n", fd->file_pos, fd->file_pos + len);
     lock_release(&vfs_lock);
 
     return status;
@@ -344,27 +335,32 @@ int64_t vfs_write(vfs_handle_t handle, size_t len, const void* buff)
 int64_t vfs_link(char* oldpath, char* newpath)
 {
     lock_wait(&vfs_lock);
+
+    // get the old node
     vfs_tnode_t* old_tnode = path_to_node(oldpath, NO_CREATE, 0);
     if (!old_tnode)
         goto fail;
+    vfs_inode_t* old_inode = old_tnode->inode;
 
+    // create the new node
     vfs_tnode_t* new_tnode = path_to_node(newpath, CREATE | ERR_ON_EXIST, old_tnode->inode->type);
     if (!new_tnode)
         goto fail;
+    vfs_inode_t* new_inode = new_tnode->inode;
 
-    if (new_tnode->inode->mountpoint != old_tnode->inode->mountpoint) {
-        klog_err("vfs_link(): mountpoints do not match\n");
-        new_tnode->inode->fs->setlink(new_tnode, NULL);
+    // the mountpoints of the nodes must match
+    if (new_inode->mountpoint != old_inode->mountpoint) {
+        klog_err("mountpoints do not match\n");
+        new_inode->fs->setlink(new_tnode, NULL);
+        vfs_free_nodes(new_tnode);
         goto fail;
     }
 
-    // we dont want the new inode
-    vfs_inode_t* new_inode = new_tnode->inode;
+    // link the two nodes
+    old_inode->refcount++;
     new_inode->refcount = 0;
-
-    // increase refcount of link target
-    old_tnode->inode->refcount++;
-    new_tnode->inode->fs->setlink(new_tnode, old_tnode->inode);
+    old_inode->fs->setlink(new_tnode, old_inode);
+    new_tnode->inode = old_inode;
 
     // free the new inode
     kmfree(new_inode);
@@ -384,21 +380,15 @@ int64_t vfs_unlink(char* path)
         goto fail;
 
     if (tnode->inode->child) {
-        klog_err("vfs_unlink(): target not an empty folder\n");
+        klog_err("target not an empty folder\n");
         goto fail;
     }
 
-    // decrease refcount of old inode
-    vfs_inode_t* old_inode = tnode->inode;
-    old_inode->refcount--;
-
+    // decrease refcount and unlink
+    tnode->inode->refcount--;
     int64_t status = tnode->inode->fs->setlink(tnode, NULL);
 
-    // free the old inode, if required
-    if (old_inode->refcount == 0)
-        kmfree(old_inode);
-
-    // now remove the tnode from the parent
+    // remove the tnode from the parent
     // TODO: do this more elegantly
     vfs_inode_t* parent = tnode->parent;
     for (vfs_tnode_t *t = parent->child, *p = NULL; t; p = t, t = t->sibling) {
@@ -407,10 +397,12 @@ int64_t vfs_unlink(char* path)
                 parent->child = t->sibling;
             else
                 p->sibling = t->sibling;
-            kmfree(tnode);
             break;
         }
     }
+
+    // free the node data
+    vfs_free_nodes(tnode);
 
     lock_release(&vfs_lock);
     return status;
@@ -423,9 +415,9 @@ fail:
 
 void vfs_init()
 {
+    klog_warn("partial stub\n");
+
     // register ramfs and mount it at root
     vfs_register_fs(&ramfs);
     vfs_mount(NULL, "/", "ramfs");
-
-    klog_warn("vfs_init(): stub\n");
 }

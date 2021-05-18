@@ -219,6 +219,7 @@ void sched_init(void (*entry)(tid_t))
     if (entry) {
         task_add(entry, PRIORITY_MID, TASK_KERNEL_MODE, NULL, 0);
         task_add(sched_janitor, PRIORITY_MIN, TASK_KERNEL_MODE, NULL, 0);
+        klog_ok("started on bsp\n");
     }
 
     apic_timer_set_period(TIMESLICE_DEFAULT);

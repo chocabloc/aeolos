@@ -4,6 +4,7 @@
 #include "kmalloc.h"
 #include "memutils.h"
 
+// filesystem information
 vfs_fsinfo_t ramfs = {
     .name = "ramfs",
     .istemp = true,
@@ -16,10 +17,18 @@ vfs_fsinfo_t ramfs = {
     .setlink = ramfs_setlink
 };
 
+// identifying information for a node
 typedef struct {
     size_t alloc_size;
     void* data;
 } ramfs_ident_t;
+
+static ramfs_ident_t* create_ident()
+{
+    ramfs_ident_t* id = (ramfs_ident_t*)kmalloc(sizeof(ramfs_ident_t));
+    *id = (ramfs_ident_t) { .alloc_size = 0, .data = NULL };
+    return id;
+}
 
 // TODO: move bounds calculation from here to vfs.c
 int64_t ramfs_read(vfs_inode_t* this, size_t offset, size_t len, void* buff)
@@ -44,6 +53,7 @@ int64_t ramfs_write(vfs_inode_t* this, size_t offset, size_t len, const void* bu
     return 0;
 }
 
+// synchronizes file size (and other metadata)
 int64_t ramfs_sync(vfs_inode_t* this)
 {
     ramfs_ident_t* id = (ramfs_ident_t*)this->ident;
@@ -56,38 +66,29 @@ int64_t ramfs_sync(vfs_inode_t* this)
 
 int64_t ramfs_setlink(vfs_tnode_t* this, vfs_inode_t* inode)
 {
-    // should the previous inode data be freed
+    // we don't need to do anything apart from
+    // freeing the previous inode data if needed
     if (this->inode->refcount == 0) {
         ramfs_ident_t* id = (ramfs_ident_t*)this->inode->ident;
         if (id->data)
             kmfree(id->data);
         kmfree(id);
     }
-
-    // point the tnode to the new inode
-    this->inode = inode;
     return 0;
 }
 
+// refreshes the contents of a folder (not needed for ramfs)
 int64_t ramfs_refresh(vfs_inode_t* this __attribute__((unused))) { return 0; }
 
-vfs_tnode_t* ramfs_mknode(vfs_inode_t* this, char* name, vfs_node_type_t type)
+int64_t ramfs_mknode(vfs_tnode_t* this)
 {
-    // create identifying information
-    ramfs_ident_t* id = (ramfs_ident_t*)kmalloc(sizeof(ramfs_ident_t));
-    *id = (ramfs_ident_t) { .alloc_size = 0, .data = NULL };
-
-    // create tnode and inode
-    vfs_inode_t* inode = vfs_alloc_inode(type, 0777, 0, &ramfs, id, this->mountpoint);
-    return vfs_alloc_tnode(name, inode, this);
+    this->inode->ident = create_ident();
+    return 0;
 }
 
 vfs_inode_t* ramfs_mount(vfs_inode_t* at __attribute__((unused)))
 {
-    // create identifying information
-    ramfs_ident_t* id = (ramfs_ident_t*)kmalloc(sizeof(ramfs_ident_t));
-    *id = (ramfs_ident_t) { .alloc_size = 0, .data = NULL };
-
-    // allocate the inode
-    return vfs_alloc_inode(VFS_NODE_MOUNTPOINT, 0777, 0, &ramfs, id, NULL);
+    vfs_inode_t* ret = vfs_alloc_inode(VFS_NODE_MOUNTPOINT, 0777, 0, &ramfs, NULL);
+    ret->ident = create_ident();
+    return ret;
 }

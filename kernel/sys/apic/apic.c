@@ -52,5 +52,5 @@ void apic_init()
 
     // initialize the apic timer
     apic_timer_init();
-    klog_ok("APIC Initialized\n");
+    klog_ok("done\n");
 }

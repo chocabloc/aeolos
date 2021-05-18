@@ -32,7 +32,7 @@ void fb_init(stv2_struct_tag_fb* t)
     fb.width = t->fb_width;
     fb.height = t->fb_height;
     fb.pitch = t->fb_pitch;
-    klog_info("Framebuffer at %x (%dx%d)\n", fb.addr, fb.width, fb.height);
+    klog_info("framebuffer resolution is %dx%d\n", fb.width, fb.height);
 
     /* mapping the framebuffer
      * also use write-combining cache
@@ -42,6 +42,7 @@ void fb_init(stv2_struct_tag_fb* t)
 
     // initialize double buffering
     backbuffer = kmalloc(fb.pitch * fb.height);
+    klog_info("done\n");
 }
 
 // swap back and front buffers

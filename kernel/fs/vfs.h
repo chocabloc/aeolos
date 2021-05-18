@@ -32,22 +32,30 @@ typedef enum {
     VFS_MODE_READWRITE
 } vfs_openmode_t;
 
+// filesystem functions
+typedef vfs_inode_t* (*fs_func_mount_t)(vfs_inode_t* device);
+typedef int64_t (*fs_func_mknode_t)(vfs_tnode_t* this);
+typedef int64_t (*fs_func_read_t)(vfs_inode_t* this, size_t offset, size_t len, void* buff);
+typedef int64_t (*fs_func_write_t)(vfs_inode_t* this, size_t offset, size_t len, const void* buff);
+typedef int64_t (*fs_func_sync_t)(vfs_inode_t* this);
+typedef int64_t (*fs_func_refresh_t)(vfs_inode_t* this);
+typedef int64_t (*fs_func_setlink_t)(vfs_tnode_t* this, vfs_inode_t* target);
+typedef int64_t (*fs_func_ioctl_t)(vfs_inode_t* this, int64_t req_param, void* req_data);
+
 // structure storing details about a fs format
 typedef struct vfs_fsinfo_t {
     char name[16]; // name of the fs
     bool istemp; // is it a temporary filesystem
 
     // fs-specific functions
-    vfs_inode_t* (*mount)(vfs_inode_t* device);
-    vfs_tnode_t* (*mknode)(vfs_inode_t* this, char* name, vfs_node_type_t type);
-    int64_t (*read)(vfs_inode_t* this, size_t offset, size_t len, void* buff);
-    int64_t (*write)(vfs_inode_t* this, size_t offset, size_t len, const void* buff);
-    int64_t (*sync)(vfs_inode_t* this);
-    int64_t (*refresh)(vfs_inode_t* this);
-    int64_t (*setlink)(vfs_tnode_t* this, vfs_inode_t* target);
-    int64_t (*ioctl)(vfs_inode_t* this, int64_t req_param, void* req_data);
-
-    struct vfs_fsinfo_t* next;
+    fs_func_mount_t mount;
+    fs_func_mknode_t mknode;
+    fs_func_read_t read;
+    fs_func_write_t write;
+    fs_func_sync_t sync;
+    fs_func_refresh_t refresh;
+    fs_func_setlink_t setlink;
+    fs_func_ioctl_t ioctl;
 } vfs_fsinfo_t;
 
 struct _vfs_tnode_t {

@@ -18,7 +18,7 @@ acpi_sdt* acpi_get_sdt(const char* sign)
         for (uint64_t i = 0; i < len; i++) {
             acpi_sdt* table = (acpi_sdt*)PHYS_TO_VIRT(((uint64_t*)xsdt->data)[i]);
             if (memcmp(table->hdr.sign, sign, sizeof(table->hdr.sign))) {
-                klog_info("Found ACPI SDT \"%s\"\n", sign);
+                klog_info("found SDT \"%s\"\n", sign);
                 return table;
             }
         }
@@ -27,13 +27,13 @@ acpi_sdt* acpi_get_sdt(const char* sign)
         for (uint64_t i = 0; i < len; i++) {
             acpi_sdt* table = (acpi_sdt*)PHYS_TO_VIRT(((uint32_t*)rsdt->data)[i]);
             if (memcmp(table->hdr.sign, sign, sizeof(table->hdr.sign))) {
-                klog_info("Found ACPI SDT \"%s\"\n", sign);
+                klog_info("found SDT \"%s\"\n", sign);
                 return table;
             }
         }
     }
 
-    klog_warn("ACPI SDT \"%s\" not found.\n", sign);
+    klog_warn("SDT \"%s\" not found.\n", sign);
     return NULL;
 }
 
@@ -42,15 +42,15 @@ void acpi_init(stv2_struct_tag_rsdp* rsdp_info)
     rsdp_t* rsdp = (rsdp_t*)PHYS_TO_VIRT(rsdp_info->rsdp);
 
     if (rsdp->revision == 2) {
-        klog_info("ACPI v2.0 detected\n");
+        klog_info("v2.0 detected\n");
         xsdt = (acpi_sdt*)PHYS_TO_VIRT(rsdp->xsdt_addr);
         xsdt_present = true;
     } else {
-        klog_info("ACPI v1.0 detected\n");
+        klog_info("v1.0 detected\n");
         rsdt = (acpi_sdt*)PHYS_TO_VIRT(rsdp->rsdt_addr);
         xsdt_present = false;
     }
 
     madt_init();
-    klog_ok("ACPI tables initialized\n");
+    klog_ok("done\n");
 }

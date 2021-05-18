@@ -41,7 +41,7 @@ static void init_tss(cpu_t* cpuinfo)
 // AP's will run this code upon boot
 void smp_ap_entrypoint(cpu_t* cpuinfo)
 {
-    klog_printf(" Done\n", cpuinfo->cpu_id);
+    klog_printf(" done\n", cpuinfo->cpu_id);
 
     // initialize cpu features
     cpu_features_init();
@@ -70,7 +70,6 @@ static void prepare_trampoline()
 {
     // copy the trampoline blob to 0x1000 physical
     uint64_t trmpblobsize = (uint64_t)&smp_trampoline_blob_end - (uint64_t)&smp_trampoline_blob_start;
-    klog_info("SMP Trampoline code size: %d bytes\n", trmpblobsize);
     memcpy(&smp_trampoline_blob_start, (void*)PHYS_TO_VIRT(SMP_TRAMPOLINE_BLOB_ADDR), trmpblobsize);
 
     // pass arguments to trampoline code
@@ -92,7 +91,7 @@ void smp_init()
     // get lapic info from the madt
     uint64_t cpunum = madt_get_num_lapic();
     madt_record_lapic** lapics = madt_get_lapics();
-    klog_info("Number of CPU's: %d\n", cpunum);
+    klog_info("number of cores: %d\n", cpunum);
 
     // loop through the lapic's present and initialize them one by one
     for (uint64_t i = 0; i < cpunum; i++) {
@@ -101,7 +100,7 @@ void smp_init()
         // if cpu is not online capable, do not initialize it
         if (!(lapics[i]->flags & MADT_LAPIC_FLAG_ONLINE_CAPABLE)
             && !(lapics[i]->flags & MADT_LAPIC_FLAG_ENABLED)) {
-            klog_info("CPU %d is not enabled or online capable\n", lapics[i]->proc_id);
+            klog_info("core %d is not enabled or online capable\n", lapics[i]->proc_id);
             continue;
         }
 
@@ -110,7 +109,7 @@ void smp_init()
 
         // if cpu is the bootstrap processor, do not initialize it
         if (apic_read_reg(APIC_REG_ID) == lapics[i]->apic_id) {
-            klog_info("CPU %d is BSP\n", lapics[i]->proc_id);
+            klog_info("core %d is BSP\n", lapics[i]->proc_id);
             info.cpus[info.num_cpus].is_bsp = true;
             wrmsr(MSR_GS_BASE, (uint64_t)&info.cpus[info.num_cpus]);
             init_tss(&info.cpus[info.num_cpus]);
@@ -118,7 +117,7 @@ void smp_init()
             continue;
         }
 
-        klog_info("Initializing CPU %d...", lapics[i]->proc_id);
+        klog_info("initializing core %d...", lapics[i]->proc_id);
 
         // allocate and pass the stack
         void* stack = kmalloc(PAGE_SIZE);
@@ -148,7 +147,7 @@ void smp_init()
         }
 
         if (!success) {
-            klog_printf(" Failed\n");
+            klog_printf(" failed\n");
             kmfree(stack);
         } else {
             info.cpus[info.num_cpus].is_bsp = false;
@@ -156,7 +155,7 @@ void smp_init()
         }
     }
 
-    klog_ok("SMP initialized. %d processors detected\n", info.num_cpus);
+    klog_ok("done. %d processors brought up\n", info.num_cpus);
 
     // identity mapping is no longer needed
     vmm_unmap(NULL, 0, NUM_PAGES(0x100000));

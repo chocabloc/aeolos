@@ -47,5 +47,5 @@ void hpet_init()
 
     // enable the counter
     hpet_write_reg(HPET_REG_GEN_CONF, hpet_read_reg(HPET_REG_GEN_CONF) | HPET_FLAG_ENABLE_CNF);
-    klog_ok("HPET initialized\n");
+    klog_ok("done\n");
 }

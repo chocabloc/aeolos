@@ -12,13 +12,13 @@ SYMBOLS = _symbols.o
 KERNELOBJ = kernel.elf
 TRAMPOLINEBLOB = sys/smp/trampoline.bin
 
-# toolchain flags and settings
-CC = gcc-10
-LD = gcc-10
-AS = gcc-10
+# toolchain options and flags
+# use gcc 11 if present, else use 10
+CC = $(if $(shell command -v gcc-11 2> /dev/null), gcc-11, gcc-10)
+LD = $(CC)
+AS = $(CC)
 NASM = nasm
 CFLAGS = -ffreestanding \
-		 -fno-omit-frame-pointer \
 		 -fno-pic \
 		 -flto \
 		 -mcmodel=kernel \

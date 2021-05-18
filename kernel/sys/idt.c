@@ -62,5 +62,5 @@ void idt_init()
     struct idtr i = { .limit = sizeof(IDT) - 1, .base = (uint64_t)&IDT };
 
     idt_load(&i);
-    klog_ok("IDT initialized\n");
+    klog_ok("done\n");
 }

@@ -98,7 +98,7 @@ void pmm_init(stv2_struct_tag_mmap* map)
             || entry.type == STIVALE2_MMAP_ACPI_RECLAIMABLE || entry.type == STIVALE2_MMAP_KERNEL_AND_MODULES)
             memstats.total_mem += entry.length;
     }
-    klog_info("PMM: Physical Limit = %x. Total Mem = %d MB\n", memstats.phys_limit, memstats.total_mem / (1024 * 1024));
+    klog_info("physical limit = %x. total memory = %d MB\n", memstats.phys_limit, memstats.total_mem / (1024 * 1024));
 
     // look for a good place to keep our bitmap
     uint64_t bm_size = memstats.phys_limit / (PAGE_SIZE * BMP_PAGES_PER_BYTE);
@@ -130,7 +130,7 @@ void pmm_init(stv2_struct_tag_mmap* map)
     // mark the bitmap as used
     pmm_alloc(VIRT_TO_PHYS(bitmap), NUM_PAGES(bm_size));
 
-    klog_ok("PMM initialized\n");
+    klog_ok("done\n");
 }
 
 // reclaim memory used by bootloader

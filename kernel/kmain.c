@@ -20,7 +20,7 @@
 void kinit(tid_t tid)
 {
     klog_show();
-    klog_ok("Multitasking initialized. First kernel task with tid %d started :)\n", tid);
+    klog_ok("first kernel task started\n");
     kernel_panic("This OS is a work in progress\n");
     while (true)
         ;
@@ -43,7 +43,7 @@ void kmain(stivale2_struct* bootinfo)
     idt_init();
     cpu_features_init();
 
-    // initialize pmm and vmm
+    // system initialization
     pmm_init((stv2_struct_tag_mmap*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_MMAP_ID));
     vmm_init();
     gdt_init();
@@ -53,7 +53,7 @@ void kmain(stivale2_struct* bootinfo)
     serial_init();
     term_init();
 
-    // parse acpi tables
+    // further system initialization
     acpi_init((stv2_struct_tag_rsdp*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_RSDP_ID));
     hpet_init();
     apic_init();

@@ -5,7 +5,7 @@ QEMUFLAGS =	-m 4096 \
 			-no-reboot \
 			-no-shutdown \
 			-enable-kvm \
-			-cpu qemu64,+avx \
+			-cpu qemu64,+avx,+invtsc \
 			-smp 4
 
 KERNELDIR = kernel
