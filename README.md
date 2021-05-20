@@ -9,9 +9,10 @@ A little x86_64 hobby OS
 * APIC and HPET Timer
 * Multitasking with SMP
 * Usermode support (partial)
+* Virtual Filesystem (partial)
 
 ### Things not yet complete:
-* Filesystem
+* Disk Drivers
 * Mouse/Keyboard Drivers
 
 ### To try out:
