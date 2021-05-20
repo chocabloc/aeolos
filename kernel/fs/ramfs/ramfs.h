@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fs/vfs.h"
+#include "fs/vfs/vfs.h"
 
 extern vfs_fsinfo_t ramfs;
 

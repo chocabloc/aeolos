@@ -1,6 +1,5 @@
 #include "ramfs.h"
-#include "../common.h"
-#include "klog.h"
+#include "../vfs/common.h"
 #include "kmalloc.h"
 #include "memutils.h"
 
@@ -30,13 +29,8 @@ static ramfs_ident_t* create_ident()
     return id;
 }
 
-// TODO: move bounds calculation from here to vfs.c
 int64_t ramfs_read(vfs_inode_t* this, size_t offset, size_t len, void* buff)
 {
-    // out of bounds
-    if (offset + len > this->size)
-        return -1;
-
     ramfs_ident_t* id = (ramfs_ident_t*)this->ident;
     memcpy(((uint8_t*)id->data) + offset, buff, len);
     return 0;
@@ -44,10 +38,6 @@ int64_t ramfs_read(vfs_inode_t* this, size_t offset, size_t len, void* buff)
 
 int64_t ramfs_write(vfs_inode_t* this, size_t offset, size_t len, const void* buff)
 {
-    // out of bounds
-    if (offset + len > this->size)
-        return -1;
-
     ramfs_ident_t* id = (ramfs_ident_t*)this->ident;
     memcpy(buff, ((uint8_t*)id->data) + offset, len);
     return 0;
@@ -66,6 +56,8 @@ int64_t ramfs_sync(vfs_inode_t* this)
 
 int64_t ramfs_setlink(vfs_tnode_t* this, vfs_inode_t* inode)
 {
+    (void)inode;
+
     // we don't need to do anything apart from
     // freeing the previous inode data if needed
     if (this->inode->refcount == 0) {
@@ -78,7 +70,11 @@ int64_t ramfs_setlink(vfs_tnode_t* this, vfs_inode_t* inode)
 }
 
 // refreshes the contents of a folder (not needed for ramfs)
-int64_t ramfs_refresh(vfs_inode_t* this __attribute__((unused))) { return 0; }
+int64_t ramfs_refresh(vfs_inode_t* this)
+{
+    (void)this;
+    return 0;
+}
 
 int64_t ramfs_mknode(vfs_tnode_t* this)
 {
@@ -86,8 +82,9 @@ int64_t ramfs_mknode(vfs_tnode_t* this)
     return 0;
 }
 
-vfs_inode_t* ramfs_mount(vfs_inode_t* at __attribute__((unused)))
+vfs_inode_t* ramfs_mount(vfs_inode_t* at)
 {
+    (void)at;
     vfs_inode_t* ret = vfs_alloc_inode(VFS_NODE_MOUNTPOINT, 0777, 0, &ramfs, NULL);
     ret->ident = create_ident();
     return ret;
