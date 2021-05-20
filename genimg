@@ -6,7 +6,7 @@ KERNEL="kernel/kernel.elf"
 cp -n thirdparty/limine-bin/limine.sys image/boot/limine.sys
 cp -n thirdparty/limine-bin/limine-cd.bin image/boot/limine-cd.bin
 cp -n thirdparty/limine-bin/limine-eltorito-efi.bin image/boot/limine-efi.bin
-cp -n thirdparty/limine-bin/BOOTX64.EFI image/EFI/BOOT/BOOTX64.EFI
+mkdir -p image/EFI/BOOT && cp -n thirdparty/limine-bin/BOOTX64.EFI image/EFI/BOOT/BOOTX64.EFI
 
 # copy the kernel
 cp $KERNEL image/boot/kernel.elf
