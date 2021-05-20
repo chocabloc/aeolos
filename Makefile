@@ -12,7 +12,9 @@ KERNELDIR = kernel
 KERNELFILE = kernel/kernel.elf
 IMAGEFILE = os.iso
 
-.PHONY: run $(IMAGEFILE) $(KERNELFILE) clean
+.PHONY: run $(IMAGEFILE) $(KERNELFILE) clean all
+
+all: $(IMAGEFILE)
 
 $(IMAGEFILE): $(KERNELFILE)
 	@echo Generating Hard Disk Image...

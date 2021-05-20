@@ -3,7 +3,6 @@
 #include "kmalloc.h"
 #include "memutils.h"
 #include "mm/mm.h"
-#include <stdbool.h>
 #include <stddef.h>
 
 static fb_info fb;

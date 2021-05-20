@@ -1,7 +1,6 @@
 #include "stivale2.h"
 #include "klog.h"
 #include "mm/vmm.h"
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -16,7 +15,7 @@ static stv2_hdr_tag_fb header_fb_tag = {
 };
 
 // stivale2 header
-__attribute__((section(".stivale2hdr"), used)) static stv2_hdr header = {
+[[gnu::section(".stivale2hdr"), gnu::used]] static stv2_hdr header = {
     .entry_point = 0,
     .stack = (uintptr_t)kernel_stack + sizeof(kernel_stack),
     .flags = 0,

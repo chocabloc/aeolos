@@ -4,57 +4,57 @@
 #include <stdint.h>
 
 // MADT Record Header
-typedef struct {
+typedef struct [[gnu::packed]] {
     uint8_t type;
     uint8_t len;
-} __attribute__((packed)) madt_record_hdr;
+} madt_record_hdr;
 
 // Local APIC
-typedef struct {
+typedef struct [[gnu::packed]] {
     madt_record_hdr hdr;
 
     uint8_t proc_id;
     uint8_t apic_id;
     uint32_t flags;
-} __attribute__((packed)) madt_record_lapic;
+} madt_record_lapic;
 
 // I/O APIC
-typedef struct {
+typedef struct [[gnu::packed]] {
     madt_record_hdr hdr;
 
     uint8_t id;
     uint8_t reserved;
     uint32_t addr;
     uint32_t gsi_base;
-} __attribute__((packed)) madt_record_ioapic;
+} madt_record_ioapic;
 
 // Interrupt Source Override
-typedef struct {
+typedef struct [[gnu::packed]] {
     madt_record_hdr hdr;
 
     uint8_t bus_src;
     uint8_t irq_src;
     uint32_t gsi;
     uint16_t flags;
-} __attribute__((packed)) madt_record_iso;
+} madt_record_iso;
 
 // Non Maskable Interrupt
-typedef struct {
+typedef struct [[gnu::packed]] {
     madt_record_hdr hdr;
 
     uint8_t proc_id;
     uint16_t flags;
     uint8_t lint;
-} __attribute__((packed)) madt_record_nmi;
+} madt_record_nmi;
 
-typedef struct {
+typedef struct [[gnu::packed]] {
     acpi_sdt_hdr hdr;
 
     uint32_t lapic_addr;
     uint32_t flags;
 
     uint8_t records[];
-} __attribute__((packed)) madt_t;
+} madt_t;
 
 #define MADT_RECORD_TYPE_LAPIC 0
 #define MADT_RECORD_TYPE_IOAPIC 1

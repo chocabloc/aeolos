@@ -2,19 +2,17 @@
 #include "apic.h"
 #include "klog.h"
 #include "lib/time.h"
-#include "sys/cpu/cpu.h"
 #include "sys/hpet.h"
 #include "sys/idt.h"
-#include <stdbool.h>
-#include <stddef.h>
 
 static uint64_t base_freq;
 static uint8_t divisor;
 static uint8_t vector;
 
 // a dummy handler, just sends eoi
-__attribute__((interrupt)) static void apic_timer_handler(void* v __attribute__((unused)))
+[[gnu::interrupt]] static void apic_timer_handler(void* v)
 {
+    (void)v;
     klog_warn("APIC Timer: No handler registered\n");
     apic_send_eoi();
 }
@@ -56,15 +54,10 @@ void apic_timer_set_mode(apic_timer_mode_t mode)
 {
     uint32_t val = apic_read_reg(APIC_REG_TIMER_LVT);
 
-    switch (mode) {
-    case APIC_TIMER_MODE_PERIODIC:
+    if(mode == APIC_TIMER_MODE_PERIODIC)
         apic_write_reg(APIC_REG_TIMER_LVT, val | APIC_TIMER_FLAG_PERIODIC);
-        break;
-
-    default:
+    else
         apic_write_reg(APIC_REG_TIMER_LVT, val & ~(APIC_TIMER_FLAG_PERIODIC));
-        break;
-    }
 }
 
 void apic_timer_enable()
@@ -89,18 +82,6 @@ void apic_timer_init()
     apic_write_reg(APIC_REG_TIMER_ICR, UINT32_MAX);
     hpet_nanosleep(MILLIS_TO_NANOS(500));
     base_freq = ((UINT32_MAX - apic_read_reg(APIC_REG_TIMER_CCR)) * 2) * divisor;
-
-    /*
-    
-     * initialize the pit as mode 0, lobyte/hibyte for calibration
-     * set initial count to 0xff00, which will be decreased at about 1.2 mhz, taking 1/18.2779 s
-    port_outb(0x43, 0b00110000);
-    port_outb(0x40, 0x00);
-    port_outb(0x40, 0xff);
-
-    // enable the apic timer, set DCR to divide by 4
-    apic_timer_enable();
-    */
 
     klog_info("APIC Timer base frequency: %d Hz. Divisor: 4.\n", base_freq);
     klog_ok("APIC Timer initialized\n");

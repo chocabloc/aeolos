@@ -1,8 +1,6 @@
 #include "term.h"
 #include "boot/stivale2.h"
 #include "dev/fb/fb.h"
-#include "klog.h"
-#include "memutils.h"
 #include <stddef.h>
 
 extern psfont_t term_font;
@@ -15,17 +13,14 @@ static const uint32_t ansicolors[16] = {
     TERM_COLOR_LTBLUE, TERM_COLOR_LTMAGENTA, TERM_COLOR_LTCYAN, TERM_COLOR_LTWHITE
 };
 
-static uint32_t fgcolor = TERM_COLOR_WHITE;
-static uint32_t bgcolor = TERM_COLOR_BLACK;
+static uint32_t fgcolor = DEFAULT_FGCOLOR;
+static uint32_t bgcolor = DEFAULT_BGCOLOR;
 
 // x and y position of cursor, measured in characters not pixels
 static uint32_t cursor_x, cursor_y;
 
 // width and height of framebuffer in characters
 static uint32_t term_width, term_height;
-
-// is the terminal ready
-static bool ready = false;
 
 // implement ansi color escape sequences
 static bool parse_cmd_byte(uint8_t byte)
@@ -58,8 +53,8 @@ static bool parse_cmd_byte(uint8_t byte)
             cparams[cparamcount++] = 0;
         } else if (byte == 'm') {
             if (cparams[0] == 0) {
-                term_setfgcolor(TERM_COLOR_WHITE);
-                term_setbgcolor(TERM_COLOR_BLACK);
+                term_setfgcolor(DEFAULT_FGCOLOR);
+                term_setbgcolor(DEFAULT_BGCOLOR);
             } else if (cparams[0] >= 30 && cparams[0] <= 37) {
                 if (cparamcount == 2 && cparams[1] == 1) {
                     term_setfgcolor(ansicolors[cparams[0] - 30 + 8]);
@@ -175,12 +170,6 @@ void term_putchar(uint8_t c)
     }
 }
 
-void term_puts(const char* s)
-{
-    for (size_t i = 0; s[i]; i++)
-        term_putchar(s[i]);
-}
-
 // initialize the terminal
 void term_init()
 {
@@ -191,8 +180,6 @@ void term_init()
 
     term_clear();
     term_flush();
-
-    ready = true;
 }
 
 void term_setfgcolor(uint32_t color)
@@ -203,11 +190,6 @@ void term_setfgcolor(uint32_t color)
 void term_setbgcolor(uint32_t color)
 {
     bgcolor = color;
-}
-
-bool term_isready()
-{
-    return ready;
 }
 
 uint32_t term_getwidth()

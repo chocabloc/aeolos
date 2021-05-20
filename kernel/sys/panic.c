@@ -1,6 +1,5 @@
 #include "panic.h"
 #include "apic/timer.h"
-#include "dev/term/term.h"
 #include "klog.h"
 #include "lock.h"
 #include "mm/mm.h"
@@ -12,8 +11,9 @@
 
 static lock_t panic_lock;
 
-__attribute__((interrupt)) static void halt(void* v __attribute__((unused)))
+[[gnu::interrupt]] _Noreturn static void halt(void* v)
 {
+    (void)v;
     asm volatile("cli");
     while (true)
         asm volatile("hlt");
@@ -55,7 +55,7 @@ static void do_stacktrace()
     }
 }
 
-__attribute__((noreturn)) void kernel_panic(const char* s, ...)
+_Noreturn void kernel_panic(const char* s, ...)
 {
     asm volatile("cli");
     lock_wait(&panic_lock);

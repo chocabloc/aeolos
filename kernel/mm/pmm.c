@@ -9,8 +9,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-extern void kernel_end;
-
 // the bitmap
 static uint8_t* bitmap;
 

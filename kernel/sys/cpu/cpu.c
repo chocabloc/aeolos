@@ -1,6 +1,5 @@
 #include "cpu.h"
 #include "cpuid.h"
-#include "klog.h"
 
 uint64_t rdmsr(uint32_t msr)
 {

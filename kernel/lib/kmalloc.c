@@ -3,7 +3,6 @@
  */
 
 #include "kmalloc.h"
-#include "klog.h"
 #include "memutils.h"
 #include "mm/pmm.h"
 #include "mm/vmm.h"

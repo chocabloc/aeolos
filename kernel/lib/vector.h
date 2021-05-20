@@ -9,8 +9,9 @@
         type* data;         \
     }
 
-#define vector_new_static(type, name) \
-    static vector_struct(type) name = { 0 }
+#define vector_new(type, name) vector_struct(type) name = { 0 }
+
+#define vector_new_static(type, name) static vector_new(type, name)
 
 #define vector_push_back(vec, elem)                                  \
     {                                                                \

@@ -9,7 +9,7 @@
 
 static void* lapic_base;
 
-__attribute__((interrupt)) static void spurious_int_handler(void* v __attribute__((unused)))
+[[gnu::interrupt]] static void spurious_int_handler(void* v [[maybe_unused]])
 {
     klog_info("APIC spurious interrupt recieved");
 }

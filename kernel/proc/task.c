@@ -1,9 +1,7 @@
 #include "task.h"
-#include "klog.h"
 #include "kmalloc.h"
 #include "sched/sched.h"
 #include "sys/cpu/cpu.h"
-#include <stdbool.h>
 #include <stddef.h>
 
 // highest used tid

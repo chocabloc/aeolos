@@ -2,7 +2,7 @@
 
 #include "boot/stivale2.h"
 
-typedef struct {
+typedef struct [[gnu::packed]] {
     char sign[8];
     uint8_t chksum;
     char oem_id[6];
@@ -14,9 +14,9 @@ typedef struct {
     uint64_t xsdt_addr;
     uint8_t chksum_ext;
     uint8_t reserved[3];
-} __attribute__((packed)) rsdp_t;
+} rsdp_t;
 
-typedef struct {
+typedef struct [[gnu::packed]] {
     char sign[4];
     uint32_t length;
     uint8_t rev;
@@ -26,24 +26,24 @@ typedef struct {
     uint32_t oem_rev;
     uint32_t creator_id;
     uint32_t creator_rev;
-} __attribute__((packed)) acpi_sdt_hdr;
+} acpi_sdt_hdr;
 
-typedef struct {
+typedef struct [[gnu::packed]] {
     // the header
     acpi_sdt_hdr hdr;
 
     // the data
     uint8_t data[];
-} __attribute__((packed)) acpi_sdt;
+} acpi_sdt;
 
 // acpi generic address structure
-typedef struct {
+typedef struct [[gnu::packed]] {
     uint8_t addr_space_id;
     uint8_t reg_bit_width;
     uint8_t reg_bit_offset;
     uint8_t reserved;
     uint64_t address;
-} __attribute__((packed)) acpi_gas_t;
+} acpi_gas_t;
 
 #define SDT_SIGN_MADT "APIC"
 #define SDT_SIGN_BGRT "BGRT"

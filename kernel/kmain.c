@@ -1,7 +1,7 @@
 #include "dev/fb/fb.h"
 #include "dev/serial/serial.h"
 #include "dev/term/term.h"
-#include "fs/vfs.h"
+#include "fs/vfs/vfs.h"
 #include "klog.h"
 #include "mm/mm.h"
 #include "proc/sched/sched.h"
@@ -14,11 +14,11 @@
 #include "sys/panic.h"
 #include "sys/smp/smp.h"
 #include <stdbool.h>
-#include <stddef.h>
 
 // first task to be executed
-void kinit(tid_t tid)
+_Noreturn void kinit(tid_t tid)
 {
+    (void)tid;
     klog_show();
     klog_ok("first kernel task started\n");
     kernel_panic("This OS is a work in progress\n");
@@ -26,7 +26,7 @@ void kinit(tid_t tid)
         ;
 }
 
-void kmain(stivale2_struct* bootinfo)
+_Noreturn void kmain(stivale2_struct* bootinfo)
 {
     // convert the physical address to a virtual one, since we will be removing identity mapping later
     bootinfo = (stivale2_struct*)PHYS_TO_VIRT(bootinfo);

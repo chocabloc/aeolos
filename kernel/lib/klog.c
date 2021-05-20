@@ -17,7 +17,7 @@ static void putch(uint8_t i)
     log_buff[log_end++] = i;
     if (log_end == log_start)
         log_start++;
-    serial_send(i);
+    serial_send((char)i);
 }
 
 static void putsn(const char* s, uint64_t len)
@@ -52,23 +52,24 @@ static void putint(int n)
         putch('-');
         n = -n;
     }
-    size_t div = 1;
-    int temp = n;
+    size_t div = 1, temp = n;
     while (temp > 0) {
         temp /= 10;
         div *= 10;
     }
     while (div >= 10) {
-        int digit = ((n % div) - (n % (div / 10))) / (div / 10);
+        uint8_t digit = ((n % div) - (n % (div / 10))) / (div / 10);
         div /= 10;
         putch(digit + '0');
     }
 }
 
-static void klogdisplayd(tid_t tid __attribute__((unused)))
+_Noreturn static void klogdisplayd(tid_t tid)
 {
+    (void)tid;
+
     // maximum no of chars to print
-    int numchars = term_getwidth() * term_getheight();
+    uint32_t numchars = term_getwidth() * term_getheight();
 
     while (true) {
         term_clear();
@@ -185,7 +186,7 @@ void klog_show()
 // when you really need to show the log
 void klog_show_urgent()
 {
-    int numchars = term_getwidth() * term_getheight();
+    uint32_t numchars = term_getwidth() * term_getheight();
     term_clear();
     for (uint16_t i = log_end - numchars; i != log_end; i++)
         term_putchar(log_buff[i]);

@@ -22,6 +22,9 @@
 #define TERM_COLOR_LTCYAN 0x55ffff
 #define TERM_COLOR_LTWHITE 0xffffff
 
+#define DEFAULT_FGCOLOR TERM_COLOR_WHITE
+#define DEFAULT_BGCOLOR TERM_COLOR_BLACK
+
 typedef struct {
     uint32_t magic; /* magic bytes to identify PSF */
     uint32_t version; /* zero */
@@ -37,11 +40,7 @@ typedef struct {
 } psfont_t;
 
 void term_init();
-bool term_isready();
-
 void term_putchar(uint8_t c);
-void term_puts(const char* s);
-
 void term_setfgcolor(uint32_t color);
 void term_setbgcolor(uint32_t color);
 uint32_t term_getwidth();

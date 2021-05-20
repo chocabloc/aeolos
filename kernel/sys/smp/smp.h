@@ -15,8 +15,8 @@
 
 #define CPU_MAX 256
 
-typedef struct {
-    uint32_t unused0 __attribute__((aligned(16)));
+typedef struct [[gnu::packed]] {
+    uint32_t unused0;
     uint64_t rsp0;
     uint64_t rsp1;
     uint64_t rsp2;
@@ -30,13 +30,13 @@ typedef struct {
     uint64_t ist7;
     uint64_t unused2;
     uint32_t iopb_offset;
-} __attribute__((packed)) tss_t;
+} tss_t;
 
 typedef struct {
     uint16_t cpu_id;
     uint16_t lapic_id;
     bool is_bsp;
-    tss_t tss __attribute__((aligned(16)));
+    tss_t tss;
 } cpu_t;
 
 // smp information structure

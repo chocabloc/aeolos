@@ -1,9 +1,6 @@
 #include "gdt.h"
-#include "klog.h"
 #include "kmalloc.h"
 #include <stdint.h>
-
-extern void gdt_load(struct gdtr*);
 
 void gdt_init()
 {
@@ -16,7 +13,7 @@ void gdt_init()
         .entry_udata = GDT_ENTRY_USER_DATA
     };
 
-    struct gdtr g = { .base = (uint64_t)gdt, .limit = (sizeof(gdt_t) - 1) };
+    struct gdtr g = { .base = (uint64_t)gdt, .limit = sizeof(gdt_t) - 1};
     asm volatile("lgdt %0;"
                  "pushq $0x08;"
                  "pushq $reload_sr;"

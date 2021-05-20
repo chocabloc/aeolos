@@ -1,5 +1,4 @@
 #include "pit.h"
-#include "klog.h"
 #include "sys/cpu/cpu.h"
 #include <stdbool.h>
 

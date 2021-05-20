@@ -1,10 +1,8 @@
 #include "sched.h"
-#include "../task.h"
 #include "kmalloc.h"
 #include "lib/klog.h"
 #include "lib/time.h"
 #include "lock.h"
-#include "mm/mm.h"
 #include "sys/apic/apic.h"
 #include "sys/apic/timer.h"
 #include "sys/hpet.h"
@@ -36,15 +34,17 @@ static tqueue_t tasks_dead;
 extern void init_context_switch(void* v);
 extern void finish_context_switch(task_t* next);
 
-static void idle(tid_t tid __attribute__((unused)))
+_Noreturn static void idle(tid_t tid)
 {
+    (void)tid;
     while (true)
         asm volatile("hlt");
 }
 
 // the janitor, runs every second to clean up dead tasks
-static void sched_janitor(tid_t tid __attribute__((unused)))
+_Noreturn static void sched_janitor(tid_t tid)
 {
+    (void)tid;
     while (true) {
         lock_wait(&sched_lock);
         task_t* t;

@@ -18,7 +18,8 @@ CC = $(if $(shell command -v gcc-11 2> /dev/null), gcc-11, gcc-10)
 LD = $(CC)
 AS = $(CC)
 NASM = nasm
-CFLAGS = -ffreestanding \
+CFLAGS = -std=gnu2x \
+		 -ffreestanding \
 		 -fno-pic \
 		 -flto \
 		 -mcmodel=kernel \
@@ -28,6 +29,7 @@ CFLAGS = -ffreestanding \
 		 -mno-sse \
 		 -mno-sse2 \
 		 -Wall \
+		 -Wextra \
 		 -Ofast \
 		 -I . \
 		 -I lib

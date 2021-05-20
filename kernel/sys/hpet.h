@@ -3,7 +3,7 @@
 #include "acpi/acpi.h"
 #include <stdint.h>
 
-typedef struct {
+typedef struct [[gnu::packed]] {
     // the header
     acpi_sdt_hdr hdr;
 
@@ -21,7 +21,7 @@ typedef struct {
     uint8_t hpet_number;
     uint16_t minimum_tick;
     uint8_t page_protection;
-} __attribute__((packed)) hpet_sdt_t;
+} hpet_sdt_t;
 
 #define HPET_REG_GEN_CAP_ID 0x00
 #define HPET_REG_GEN_CONF 0x10

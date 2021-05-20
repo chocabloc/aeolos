@@ -39,7 +39,7 @@ static void init_tss(cpu_t* cpuinfo)
 }
 
 // AP's will run this code upon boot
-void smp_ap_entrypoint(cpu_t* cpuinfo)
+_Noreturn void smp_ap_entrypoint(cpu_t* cpuinfo)
 {
     klog_printf(" done\n", cpuinfo->cpu_id);
 
@@ -95,7 +95,7 @@ void smp_init()
 
     // loop through the lapic's present and initialize them one by one
     for (uint64_t i = 0; i < cpunum; i++) {
-        int counter_prev = *ap_boot_counter, counter_curr = counter_prev;
+        int counter_prev = *ap_boot_counter, counter_curr;
 
         // if cpu is not online capable, do not initialize it
         if (!(lapics[i]->flags & MADT_LAPIC_FLAG_ONLINE_CAPABLE)

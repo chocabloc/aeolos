@@ -6,6 +6,6 @@
 #include "symbols.h"
 #include <stdint.h>
 
-__attribute__((weak)) const symbol_t _kernel_symtab[] = {
+[[gnu::weak]] const symbol_t _kernel_symtab[] = {
     { .addr = UINT64_MAX, .name = "" }
 };

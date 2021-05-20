@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fs/vfs.h"
+#include "fs/vfs/vfs.h"
 #include "time.h"
 #include "vector.h"
 #include <stdbool.h>

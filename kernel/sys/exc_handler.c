@@ -25,7 +25,7 @@ static char* exceptions[] = {
     [30] = "Security Exception"
 };
 
-void exc_handler(uint64_t errcode, uint64_t excno)
+_Noreturn void exc_handler(uint64_t errcode, uint64_t excno)
 {
     kernel_panic("Unhandled Exception: %s. Error Code: %d.\n", exceptions[excno], errcode);
     while (true)

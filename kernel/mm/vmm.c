@@ -1,12 +1,9 @@
 #include "vmm.h"
-#include "dev/fb/fb.h"
 #include "klog.h"
 #include "kmalloc.h"
 #include "memutils.h"
 #include "mm/pmm.h"
 #include "sys/cpu/cpu.h"
-#include "sys/cpu/cpuid.h"
-#include "sys/panic.h"
 
 #define MAKE_TABLE_ENTRY(address, flags) ((address & ~(0xfff)) | flags)
 
