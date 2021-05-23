@@ -41,7 +41,7 @@ void fb_init(stv2_struct_tag_fb* t)
 
     // initialize double buffering
     backbuffer = kmalloc(fb.pitch * fb.height);
-    klog_info("done\n");
+    klog_ok("done\n");
 }
 
 // swap back and front buffers

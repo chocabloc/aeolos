@@ -42,6 +42,7 @@ _Noreturn static void idle(tid_t tid)
 }
 
 // the janitor, runs every second to clean up dead tasks
+// TODO: run it on demand
 _Noreturn static void sched_janitor(tid_t tid)
 {
     (void)tid;
@@ -57,23 +58,43 @@ _Noreturn static void sched_janitor(tid_t tid)
     }
 }
 
-static bool add_task(task_t* t)
+// adds to the sleeping tasks list
+static void add_sleeping_sorted(task_t* t)
 {
+    if (!tasks_asleep.front)
+        tq_push_front(&tasks_asleep, t);
+    else if (tasks_asleep.back->wakeuptime > t->wakeuptime)
+        tq_insert_after(&tasks_asleep, tasks_asleep.back, t);
+    else {
+        for (task_t* i = tasks_asleep.front; i; i = i->next) {
+            if (i->wakeuptime <= t->wakeuptime) {
+                tq_insert_after(&tasks_asleep, i->prev, t);
+                break;
+            }
+        }
+    }
+}
+
+static void add_task(task_t* t)
+{
+    if (t->status == TASK_SLEEPING) {
+        add_sleeping_sorted(t);
+        return;
+    }
+
     switch (t->priority) {
     case PRIORITY_BG:
         tq_push_front(&tasks_bg, t);
-        return true;
+        return;
     case PRIORITY_MIN:
         tq_push_front(&tasks_min, t);
-        return true;
+        return;
     case PRIORITY_MID:
         tq_push_front(&tasks_mid, t);
-        return true;
+        return;
     case PRIORITY_MAX:
         tq_push_front(&tasks_max, t);
-        return true;
-    default:
-        return false;
+        return;
     }
 }
 
@@ -90,11 +111,10 @@ void _do_context_switch(task_state_t* state)
         curr->kstack_top = state;
         curr->last_tick = ticks;
 
-        // insert it in respective list, if ready
-        if (curr->status == TASK_RUNNING) {
+        // if the task was running, set it to ready
+        if (curr->status == TASK_RUNNING)
             curr->status = TASK_READY;
-            add_task(curr);
-        }
+        add_task(curr);
     }
 
     // wake up tasks which need to be woken up
@@ -155,34 +175,17 @@ chosen : {
 void sched_sleep(timeval_t nanos)
 {
     // if sleep time is too little, busy sleep
-    if (nanos < TIMESLICE_DEFAULT) {
+    if (nanos <= TIMESLICE_DEFAULT) {
         hpet_nanosleep(nanos);
-        goto done;
+        return;
     }
 
     lock_wait(&sched_lock);
     task_t* curr = tasks_running[smp_get_current_info()->cpu_id];
     curr->wakeuptime = hpet_get_nanos() + nanos;
     curr->status = TASK_SLEEPING;
-
-    // add to sleeping tasks list
-    if (!tasks_asleep.front) {
-        tq_push_front(&tasks_asleep, curr);
-    } else if (tasks_asleep.back->wakeuptime > curr->wakeuptime) {
-        tq_insert_after(&tasks_asleep, tasks_asleep.back, curr);
-    } else {
-        for (task_t* i = tasks_asleep.front; i; i = i->next) {
-            if (i->wakeuptime <= curr->wakeuptime) {
-                tq_insert_after(&tasks_asleep, i->prev, curr);
-                break;
-            }
-        }
-    }
     lock_release(&sched_lock);
     asm volatile("hlt");
-
-done:
-    return;
 }
 
 void sched_die()
@@ -197,12 +200,11 @@ void sched_die()
     asm volatile("hlt");
 }
 
-bool sched_add(task_t* t)
+void sched_add(task_t* t)
 {
     lock_wait(&sched_lock);
-    bool ret = add_task(t);
+    add_task(t);
     lock_release(&sched_lock);
-    return ret;
 }
 
 task_t* sched_get_current()

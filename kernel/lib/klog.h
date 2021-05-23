@@ -19,9 +19,9 @@ void klog_printf(const char*, ...);
 void klog_vprintf(const char*, va_list);
 void klog(loglevel_t lvl, const char* s, ...);
 void klog_show();
-void klog_show_urgent();
+void klog_show_now();
 
-#define klog_ok(s, ...) klog(LOG_SUCCESS, "%s(): " s, __func__, ##__VA_ARGS__)
-#define klog_info(s, ...) klog(LOG_INFO, "%s(): " s, __func__, ##__VA_ARGS__)
-#define klog_warn(s, ...) klog(LOG_WARN, "%s(): " s, __func__, ##__VA_ARGS__)
-#define klog_err(s, ...) klog(LOG_ERROR, "%s(): " s, __func__, ##__VA_ARGS__)
+#define klog_ok(s, ...) klog(LOG_SUCCESS, "\033[37;1m%s:\033[0m " s, __func__, ##__VA_ARGS__)
+#define klog_info(s, ...) klog(LOG_INFO, "\033[37;1m%s:\033[0m " s, __func__, ##__VA_ARGS__)
+#define klog_warn(s, ...) klog(LOG_WARN, "\033[37;1m%s:\033[0m " s, __func__, ##__VA_ARGS__)
+#define klog_err(s, ...) klog(LOG_ERROR, "\033[37;1m%s:\033[0m " s, __func__, ##__VA_ARGS__)

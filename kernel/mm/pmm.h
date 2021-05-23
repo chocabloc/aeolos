@@ -24,4 +24,5 @@ uint64_t pmm_get(uint64_t numpages);
 void pmm_free(uint64_t addr, uint64_t numpages);
 bool pmm_alloc(uint64_t addr, uint64_t numpages);
 
-const mem_info* pmm_get_mem_info();
+const mem_info* pmm_getstats();
+void pmm_dumpstats();

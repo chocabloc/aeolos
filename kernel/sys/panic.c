@@ -67,13 +67,14 @@ _Noreturn void kernel_panic(const char* s, ...)
     pit_wait(10);
 
     // now print error information
-    klog_puts("\033[31m[PANIC] \033[0m");
+    klog_puts("\033[31m[PANIC] \033[37;1m");
     va_list args;
     va_start(args, s);
     klog_vprintf(s, args);
     va_end(args);
+    klog_puts("\033[0m");
     do_stacktrace();
-    klog_show_urgent();
+    klog_show_now();
 
     // halt this core
     while (true)

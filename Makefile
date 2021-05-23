@@ -1,7 +1,7 @@
 GENIMG = ./genimg
 QEMU = qemu-system-x86_64
 
-QEMUFLAGS =	-m 4096 \
+QEMUFLAGS =	-m 128 \
 			-no-reboot \
 			-no-shutdown \
 			-enable-kvm \

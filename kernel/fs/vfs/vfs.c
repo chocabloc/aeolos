@@ -5,9 +5,6 @@
 #include "kmalloc.h"
 #include "lock.h"
 #include "memutils.h"
-#include "mm/pmm.h"
-#include "proc/sched/sched.h"
-#include "random.h"
 #include "vector.h"
 
 // vfs-wide lock
@@ -32,7 +29,7 @@ static void dumpnodes_helper(vfs_tnode_t* from, int lvl)
 
 void vfs_debug()
 {
-    klog_info("dumping nodes (%d kb)\n", pmm_get_mem_info()->free_mem / 1024);
+    klog_info("dumping nodes\n");
     dumpnodes_helper(&vfs_root, 0);
     klog_printf("\n");
 }

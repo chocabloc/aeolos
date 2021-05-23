@@ -10,8 +10,10 @@ static tid_t curr_tid = 0;
 task_t* task_make(void (*entry)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap)
 {
     // could not allocate a tid
-    if (curr_tid == TID_MAX)
+    if (curr_tid == TID_MAX) {
+        klog_warn("could not allocate tid\n");
         return NULL;
+    }
 
     // allocate memory for the new task and its stack
     task_t* ntask = kmalloc(sizeof(task_t));
@@ -33,11 +35,12 @@ task_t* task_make(void (*entry)(tid_t), priority_t priority, tmode_t mode, void*
     ntask_state->rdi = curr_tid; // pass the tid to the task
 
     // initialize the task
-    ntask->kstack_top = ntask_state;
     if (pagemap)
         ntask->cr3 = pagemap;
     else
         read_cr("cr3", &(ntask->cr3));
+
+    ntask->kstack_top = ntask_state;
     ntask->tid = curr_tid;
     ntask->priority = priority;
     ntask->last_tick = 0;

@@ -5,6 +5,7 @@
 #include "klog.h"
 #include "mm/mm.h"
 #include "proc/sched/sched.h"
+#include "random.h"
 #include "sys/acpi/acpi.h"
 #include "sys/apic/apic.h"
 #include "sys/cpu/cpu.h"
@@ -21,6 +22,7 @@ _Noreturn void kinit(tid_t tid)
     (void)tid;
     klog_show();
     klog_ok("first kernel task started\n");
+    pmm_dumpstats();
     kernel_panic("This OS is a work in progress\n");
     while (true)
         ;

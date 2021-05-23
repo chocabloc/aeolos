@@ -96,7 +96,6 @@ void pmm_init(stv2_struct_tag_mmap* map)
             || entry.type == STIVALE2_MMAP_ACPI_RECLAIMABLE || entry.type == STIVALE2_MMAP_KERNEL_AND_MODULES)
             memstats.total_mem += entry.length;
     }
-    klog_info("physical limit = %x. total memory = %d MB\n", memstats.phys_limit, memstats.total_mem / (1024 * 1024));
 
     // look for a good place to keep our bitmap
     uint64_t bm_size = memstats.phys_limit / (PAGE_SIZE * BMP_PAGES_PER_BYTE);
@@ -142,4 +141,15 @@ void pmm_reclaim_bootloader_mem()
     }
 }
 
-const mem_info* pmm_get_mem_info() { return &memstats; }
+const mem_info* pmm_getstats() { return &memstats; }
+
+void pmm_dumpstats() {
+    uint64_t t = memstats.total_mem, f = memstats.free_mem,
+             u = t - f, h = memstats.phys_limit;
+
+    klog_info("\n");
+    klog_printf(" \t \tTotal: %d KiB (%d MiB)\n", t / 1024, t / (1024 * 1024));
+    klog_printf(" \t \tFree:  %d KiB (%d MiB)\n", f / 1024, f / (1024 * 1024));
+    klog_printf(" \t \tUsed:  %d KiB (%d MiB)\n", u / 1024, u / (1024 * 1024));
+    klog_printf(" \t \tThe highest available physical address is %x.\n\n", h);
+}

@@ -126,9 +126,9 @@ void vmm_init()
     vmm_map(&kaddrspace, 0xffffffff80000000, 0, NUM_PAGES(0x80000000), VMM_FLAGS_DEFAULT);
     klog_info("mapped lower 2GB to 0xFFFFFFFF80000000\n");
 
-    vmm_map(&kaddrspace, 0xffff800000000000, 0, NUM_PAGES(pmm_get_mem_info()->phys_limit), VMM_FLAGS_DEFAULT);
+    vmm_map(&kaddrspace, 0xffff800000000000, 0, NUM_PAGES(pmm_getstats()->phys_limit), VMM_FLAGS_DEFAULT);
     klog_info("mapped all memory to 0xFFFF800000000000\n");
 
     write_cr("cr3", VIRT_TO_PHYS(kaddrspace.PML4));
-    klog_info("done\n");
+    klog_ok("done\n");
 }

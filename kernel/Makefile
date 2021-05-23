@@ -21,6 +21,7 @@ NASM = nasm
 CFLAGS = -std=gnu2x \
 		 -ffreestanding \
 		 -fno-pic \
+		 -fno-omit-frame-pointer \
 		 -flto \
 		 -mcmodel=kernel \
 		 -mno-red-zone \
