@@ -18,12 +18,12 @@ vfs_handle_t vfs_open(char* path, vfs_openmode_t mode)
     vfs_node_desc_t* nd = (vfs_node_desc_t*)kmalloc(sizeof(vfs_node_desc_t));
     nd->tnode = req;
     nd->inode = req->inode;
-    nd->file_pos = 0;
+    nd->seek_pos = 0;
     nd->mode = mode;
 
     // add to current task
     task_t* curr = sched_get_current();
-    vector_push_back(&(curr->openfiles), nd);
+    vec_push_back(&(curr->openfiles), nd);
 
     // return the handle
     lock_release(&vfs_lock);

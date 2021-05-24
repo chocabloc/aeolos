@@ -62,7 +62,7 @@ int64_t vfs_mount(char* device, char* path, char* fsname)
     vfs_tnode_t* at = path_to_node(path, NO_CREATE, 0);
     if (!at)
         goto fail;
-    if (at->inode->type != VFS_NODE_FOLDER || at->inode->child) {
+    if (at->inode->type != VFS_NODE_FOLDER || at->inode->child.len != 0) {
         klog_err("'%s' is not an empty folder\n", path);
         goto fail;
     }

@@ -15,13 +15,13 @@ int64_t vfs_read(vfs_handle_t handle, size_t len, void* buff)
     vfs_inode_t* inode = fd->inode;
 
     // truncate if asking for more data than available
-    if (fd->file_pos + len > inode->size) {
-        len = inode->size - fd->file_pos;
+    if (fd->seek_pos + len > inode->size) {
+        len = inode->size - fd->seek_pos;
         if (len == 0)
             goto end;
     }
 
-    int64_t status = fd->inode->fs->read(fd->inode, fd->file_pos, len, buff);
+    int64_t status = fd->inode->fs->read(fd->inode, fd->seek_pos, len, buff);
     if (status == -1)
         len = 0;
 
@@ -47,12 +47,12 @@ int64_t vfs_write(vfs_handle_t handle, size_t len, const void* buff)
     vfs_inode_t* inode = fd->inode;
 
     // expand file if writing more data than its size
-    if (fd->file_pos + len > inode->size) {
-        inode->size = fd->file_pos + len;
+    if (fd->seek_pos + len > inode->size) {
+        inode->size = fd->seek_pos + len;
         inode->fs->sync(inode);
     }
 
-    int64_t status = inode->fs->write(inode, fd->file_pos, len, buff);
+    int64_t status = inode->fs->write(inode, fd->seek_pos, len, buff);
     if (status == -1)
         len = 0;
 
@@ -73,6 +73,6 @@ int64_t vfs_seek(vfs_handle_t handle, size_t pos)
         return -1;
     }
 
-    fd->file_pos = pos;
+    fd->seek_pos = pos;
     return 0;
 }

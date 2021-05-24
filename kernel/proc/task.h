@@ -70,7 +70,7 @@ typedef struct task_t {
     timeval_t wakeuptime; // time at which task should wake up
     tmode_t mode; // kernel mode or usermode
     void* kstack_limit; // kernel stack limit
-    vector_struct(vfs_node_desc_t*) openfiles; //  stores open files
+    vec_struct(vfs_node_desc_t*) openfiles; //  stores open files
 
     struct task_t* next;
     struct task_t* prev;

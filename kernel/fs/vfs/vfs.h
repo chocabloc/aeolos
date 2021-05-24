@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "lib/vector.h"
 
 // some limits
 #define VFS_MAX_PATH_LEN 4096
@@ -63,7 +64,7 @@ struct _vfs_inode_t {
     vfs_fsinfo_t* fs;
     void* ident;
     vfs_tnode_t* mountpoint;
-    vfs_tnode_t* child; // pointer to first child
+    vec_struct(vfs_tnode_t*) child;
 };
 
 // structure describing an open node
@@ -71,14 +72,14 @@ typedef struct {
     vfs_tnode_t* tnode;
     vfs_inode_t* inode;
     vfs_openmode_t mode;
-    size_t file_pos;
+    size_t seek_pos;
 } vfs_node_desc_t;
 
 // directory entry structure
 typedef struct {
     vfs_node_type_t type;
     size_t record_len;
-    char name[];
+    char name[VFS_MAX_NAME_LEN];
 } vfs_dirent_t;
 
 void vfs_init();
@@ -95,5 +96,5 @@ int64_t vfs_write(vfs_handle_t handle, size_t len, const void* buff);
 int64_t vfs_chmod(vfs_handle_t handle, int32_t newperms);
 int64_t vfs_link(char* oldpath, char* newpath);
 int64_t vfs_unlink(char* path);
-int64_t vfs_getdents(vfs_handle_t handle, vfs_dirent_t* dirents, int64_t num);
+int64_t vfs_getdent(vfs_handle_t handle, vfs_dirent_t* dirent);
 int64_t vfs_mount(char* device, char* path, char* fsname);

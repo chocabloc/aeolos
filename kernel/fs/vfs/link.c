@@ -51,7 +51,7 @@ int64_t vfs_unlink(char* path)
     if (!tnode)
         goto fail;
 
-    if (tnode->inode->child) {
+    if (tnode->inode->child.len != 0) {
         klog_err("target not an empty folder\n");
         goto fail;
     }
@@ -61,17 +61,8 @@ int64_t vfs_unlink(char* path)
     int64_t status = tnode->inode->fs->setlink(tnode, NULL);
 
     // remove the tnode from the parent
-    // TODO: do this more elegantly
     vfs_inode_t* parent = tnode->parent;
-    for (vfs_tnode_t *t = parent->child, *p = NULL; t; p = t, t = t->sibling) {
-        if (t == tnode) {
-            if (!p)
-                parent->child = t->sibling;
-            else
-                p->sibling = t->sibling;
-            break;
-        }
-    }
+    vec_erase_val(&(parent->child), tnode);
 
     // free the node data
     vfs_free_nodes(tnode);

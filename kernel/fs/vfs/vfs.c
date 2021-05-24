@@ -14,7 +14,7 @@ lock_t vfs_lock;
 vfs_tnode_t vfs_root;
 
 // list of installed filesystems
-vector_new_static(vfs_fsinfo_t*, vfs_fslist);
+vec_new_static(vfs_fsinfo_t*, vfs_fslist);
 
 static void dumpnodes_helper(vfs_tnode_t* from, int lvl)
 {
@@ -23,8 +23,8 @@ static void dumpnodes_helper(vfs_tnode_t* from, int lvl)
     klog_printf(" %d: %s -> %x inode, (%d refs)\n", lvl, from->name, from->inode, from->inode->refcount);
 
     if (IS_TRAVERSABLE(from->inode))
-        for (vfs_tnode_t* t = from->inode->child; t; t = t->sibling)
-            dumpnodes_helper(t, lvl + 1);
+        for (size_t i = 0; i < from->inode->child.len; i++)
+            dumpnodes_helper(vec_at(&(from->inode->child), i), lvl + 1);
 }
 
 void vfs_debug()
@@ -36,7 +36,7 @@ void vfs_debug()
 
 void vfs_register_fs(vfs_fsinfo_t* fs)
 {
-    vector_push_back(&vfs_fslist, fs);
+    vec_push_back(&vfs_fslist, fs);
 }
 
 // get fs with specified name

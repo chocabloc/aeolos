@@ -85,10 +85,11 @@ vfs_tnode_t* path_to_node(char* path, uint8_t mode, vfs_node_type_t create_type)
         foundnode = false;
         if (!IS_TRAVERSABLE(curr->inode))
             break;
-        for (vfs_tnode_t* t = curr->inode->child; t; t = t->sibling) {
-            if (strncmp(t->name, tmpbuff, sizeof(t->name)) == 0) {
+        for (size_t i = 0; i < curr->inode->child.len; i++) {
+            vfs_tnode_t* child = vec_at(&(curr->inode->child), i);
+            if (strncmp(child->name, tmpbuff, sizeof(child->name)) == 0) {
                 foundnode = true;
-                curr = t;
+                curr = child;
                 break;
             }
         }
@@ -108,13 +109,7 @@ vfs_tnode_t* path_to_node(char* path, uint8_t mode, vfs_node_type_t create_type)
             vfs_inode_t* new_inode = vfs_alloc_inode(create_type, 0777, 0, curr->inode->fs, curr->inode->mountpoint);
             vfs_tnode_t* new_tnode = vfs_alloc_tnode(tmpbuff, new_inode, curr->inode);
 
-            if (curr->inode->child == NULL) {
-                curr->inode->child = new_tnode;
-                curr->inode->child->sibling = NULL;
-            } else {
-                new_tnode->sibling = curr->inode->child->sibling;
-                curr->inode->child->sibling = new_tnode;
-            }
+            vec_push_back(&(curr->inode->child), new_tnode);
             curr->inode->fs->mknode(new_tnode);
             return new_tnode;
         } else {
