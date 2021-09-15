@@ -110,7 +110,7 @@ struct stivale2_struct_tag_framebuffer {
     uint8_t blue_mask_shift;
 } __attribute__((packed));
 
-#define STIVALE2_STRUCT_TAG_MODULES_ID 0x4b6fe466aade04ce
+#define STV2_STRUCT_TAG_MODULES_ID 0x4b6fe466aade04ce
 
 struct stivale2_module {
     uint64_t begin;
@@ -125,6 +125,7 @@ struct stivale2_struct_tag_modules {
     uint64_t module_count;
     struct stivale2_module modules[];
 } __attribute__((packed));
+typedef struct stivale2_struct_tag_modules stv2_struct_tag_modules;
 
 #define STV2_STRUCT_TAG_RSDP_ID 0x9e1786930a375e78
 

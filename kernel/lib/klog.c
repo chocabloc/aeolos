@@ -2,9 +2,9 @@
 #include "dev/serial/serial.h"
 #include "dev/term/term.h"
 #include "lock.h"
+#include "proc/sched/sched.h"
 #include "proc/task.h"
 #include "sys/hpet.h"
-#include "proc/sched/sched.h"
 #include <stdbool.h>
 
 // ring buffer for kernel log
@@ -38,33 +38,24 @@ static void puts(const char* s)
 // print number as 64-bit hex
 static void puthex(uint64_t n)
 {
+    static char lookup[] = "0123456789ABCDEF";
     puts("0x");
     for (int i = 60; i >= 0; i -= 4) {
         uint64_t digit = (n >> i) & 0xF;
-        putch((digit <= 9) ? (digit + '0') : (digit - 10 + 'A'));
+        putch(lookup[digit]);
     }
 }
 
-// print number
+// print number in base 10
+// TODO: support arbitrary bases
 static void putint(int n)
 {
-    if (n == 0)
-        putch('0');
-
-    if (n < 0) {
-        putch('-');
-        n = -n;
-    }
-    size_t div = 1, temp = n;
-    while (temp > 0) {
-        temp /= 10;
-        div *= 10;
-    }
-    while (div >= 10) {
-        uint8_t digit = ((n % div) - (n % (div / 10))) / (div / 10);
-        div /= 10;
-        putch(digit + '0');
-    }
+    static char tmpb[21] = { 0 };
+    char* tmp = &tmpb[0];
+    for (; n; n /= 10)
+        *++tmp = (n % 10) + '0';
+    while (*tmp)
+        putch(*tmp--);
 }
 
 static void klog_show_helper()
@@ -75,14 +66,14 @@ static void klog_show_helper()
 
     /*
      * We don't print all the characters, since that would be terribly
-     * slow. Instead we calculate the number of characters actually
+     * slow. Instead, we calculate the number of characters actually
      * visible on screen and print those
      */
     uint32_t visible = 0, used = 0;
     for (uint16_t i = log_end; i != log_start && used < numchars; i--, visible++) {
         if (log_buff[i] == '\n')
             used += (used % width != 0) ? width - (used % width) : 0;
-        else if(log_buff[i])
+        else if (log_buff[i])
             used += 1;
     }
 
@@ -105,7 +96,7 @@ _Noreturn static void klogdisplayd(tid_t tid)
         timeval_t end = hpet_get_nanos(), delta = end - begin;
 
         // we want to lock the fps at about 60
-        if(delta >= MILLIS_TO_NANOS(16))
+        if (delta >= MILLIS_TO_NANOS(16))
             continue;
         sched_sleep(MILLIS_TO_NANOS(16) - delta);
     }

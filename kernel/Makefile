@@ -3,12 +3,13 @@ LINKSCRIPT = linker.ld
 CFILES = $(shell find . -name "*.c")
 ASMFILES = $(shell find . -name "*.s")
 TRAMPOLINEFILE = sys/smp/trampoline.nasm
+SYMBOLFILE = _symbols.gen
 
 # object files
 COBJS = $(CFILES:.c=.o)
 ASMOBJS = $(ASMFILES:.s=.o)
 OBJS = $(COBJS) $(ASMOBJS)
-SYMBOLS = _symbols.o
+SYMBOLOBJ = _symbols.o
 KERNELOBJ = kernel.elf
 TRAMPOLINEBLOB = sys/smp/trampoline.bin
 
@@ -45,19 +46,21 @@ LINKFLAGS = -T$(LINKSCRIPT) \
 # rules
 .PHONY: clean kernel
 
-kernel: $(KERNELOBJ)
+# compile and link symbols with the built binary
+kernel: $(SYMBOLFILE) $(KERNELOBJ)
+	@$(CC) $(CFLAGS) -x c -c $(SYMBOLFILE) -o $(SYMBOLOBJ)
+	@echo "Linking symbols..."
+	@$(LD) $(LINKFLAGS) $(OBJS) $(SYMBOLOBJ) -o $(KERNELOBJ)
 
-# link, then generate symbols, and then link again	
+# generate symbols file
+$(SYMBOLFILE): $(KERNELOBJ)
+	@echo "Generating symbols..."
+	@./gensym $(KERNELOBJ)
+
+# link all objects together
 $(KERNELOBJ): $(TRAMPOLINEBLOB) $(OBJS) 
 	@echo Linking all objects...
-	@$(LD) $(LINKFLAGS) $(OBJS) -o $@ 
-
-	@echo "Generating symbols..."
-	@./gensym $@
-	@$(CC) $(CFLAGS) -x c -c _symbols.gen -o _symbols.o
-
-	@echo "Linking symbols..."
-	@$(LD) $(LINKFLAGS) $(OBJS) _symbols.o -o $@ 
+	@$(LD) $(LINKFLAGS) $(OBJS) -o $@
 	
 # build c objects
 $(COBJS): %.o: %.c
@@ -76,5 +79,4 @@ $(TRAMPOLINEBLOB): $(TRAMPOLINEFILE)
 
 # clean
 clean: 
-	@echo Cleaning...
 	@rm -f $(OBJS) $(KERNELOBJ) _symbols.gen

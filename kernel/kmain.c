@@ -1,3 +1,4 @@
+#include "boot/initrd/initrd.h"
 #include "dev/fb/fb.h"
 #include "dev/serial/serial.h"
 #include "dev/term/term.h"
@@ -16,22 +17,38 @@
 #include "sys/smp/smp.h"
 #include <stdbool.h>
 
+static stivale2_struct* bootinfo;
+
 // first task to be executed
 _Noreturn void kinit(tid_t tid)
 {
     (void)tid;
     klog_show();
     klog_ok("first kernel task started\n");
+    //for (int i = 0; ; i++)
+    //	klog_printf("%d\n", i);
+    	
+    initrd_init((stv2_struct_tag_modules*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_MODULES_ID));
+
+    klog_printf("\n");
+    char buff[4096];
+    vfs_handle_t fh = vfs_open("/User/aditya/Documents/literally 1984.txt", VFS_MODE_READ);
+    klog_info("reading \"/User/aditya/Documents/literally 1984.txt\":\n\n");
+    vfs_read(fh, 4096, buff);
+    klog_printf("%s\n", buff);
+    vfs_close(fh);
+
+    vfs_debug();
     pmm_dumpstats();
     kernel_panic("This OS is a work in progress\n");
     while (true)
         ;
 }
 
-_Noreturn void kmain(stivale2_struct* bootinfo)
+_Noreturn void kmain(stivale2_struct* info)
 {
     // convert the physical address to a virtual one, since we will be removing identity mapping later
-    bootinfo = (stivale2_struct*)PHYS_TO_VIRT(bootinfo);
+    bootinfo = (stivale2_struct*)PHYS_TO_VIRT(info);
 
     // draw the banner
     klog_printf(" \xda\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xc4\xbf\n");

@@ -106,7 +106,8 @@ vfs_tnode_t* path_to_node(char* path, uint8_t mode, vfs_node_type_t create_type)
         // create the node if CREATE was specified and
         // the node to be created is the last one in the path
         if (mode & CREATE && curr_index > pathlen && IS_TRAVERSABLE(curr->inode)) {
-            vfs_inode_t* new_inode = vfs_alloc_inode(create_type, 0777, 0, curr->inode->fs, curr->inode->mountpoint);
+            vfs_inode_t* new_inode = vfs_alloc_inode(create_type, 0777, 0, curr->inode->fs,
+                                                     curr->inode->mountpoint);
             vfs_tnode_t* new_tnode = vfs_alloc_tnode(tmpbuff, new_inode, curr->inode);
 
             vec_push_back(&(curr->inode->child), new_tnode);

@@ -24,6 +24,7 @@ int64_t vfs_read(vfs_handle_t handle, size_t len, void* buff)
     int64_t status = fd->inode->fs->read(fd->inode, fd->seek_pos, len, buff);
     if (status == -1)
         len = 0;
+    fd->seek_pos += len;
 
 end:
     lock_release(&vfs_lock);
@@ -55,6 +56,7 @@ int64_t vfs_write(vfs_handle_t handle, size_t len, const void* buff)
     int64_t status = inode->fs->write(inode, fd->seek_pos, len, buff);
     if (status == -1)
         len = 0;
+    fd->seek_pos += len;
 
     lock_release(&vfs_lock);
     return (int64_t)len;

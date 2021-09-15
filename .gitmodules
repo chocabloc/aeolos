@@ -1,3 +1,7 @@
 [submodule "thirdparty/limine-bin"]
 	path = thirdparty/limine-bin
 	url = https://github.com/limine-bootloader/limine
+
+[submodule "thirdparty/saf"]
+	path = thirdparty/saf
+	url = https://github.com/chocabloc/saf
