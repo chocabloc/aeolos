@@ -23,7 +23,7 @@ run: $(IMAGEFILE)
 	@echo Testing image in QEMU...
 	@$(QEMU) -cdrom $(IMAGEFILE) $(QEMUFLAGS)
 
-$(IMAGEFILE): $(INITRDFILE) $(KERNELFILE)
+$(IMAGEFILE): $(KERNELFILE) $(INITRDFILE)
 	@echo Generating Hard Disk Image...
 	@$(GENIMG)
 
@@ -33,7 +33,7 @@ $(INITRDFILE): $(INITRDDIR) $(SAF-MAKE)
 	@gzip -f image/boot/initrd.saf 
 
 $(SAF-MAKE):
-	@echo Compiling saf-make...
+	@echo Building tools...
 	@$(MAKE) -C thirdparty/saf all
 	
 $(KERNELFILE): 
