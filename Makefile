@@ -30,7 +30,7 @@ $(IMAGEFILE): $(INITRDFILE) $(KERNELFILE)
 $(INITRDFILE): $(INITRDDIR) $(SAF-MAKE)
 	@echo Generating initrd...
 	@$(SAF-MAKE) $(INITRDDIR) image/boot/initrd.saf -q
-	@gzip image/boot/initrd.saf 
+	@gzip -f image/boot/initrd.saf 
 
 $(SAF-MAKE):
 	@echo Compiling saf-make...
