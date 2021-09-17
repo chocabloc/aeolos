@@ -35,27 +35,27 @@ static void puts(const char* s)
         putch(s[i]);
 }
 
-// print number as 64-bit hex
-static void puthex(uint64_t n)
-{
-    static char lookup[] = "0123456789ABCDEF";
-    puts("0x");
-    for (int i = 60; i >= 0; i -= 4) {
-        uint64_t digit = (n >> i) & 0xF;
-        putch(lookup[digit]);
-    }
-}
+// print number in arbitrary base
+static void putnum(uint64_t num, int base, bool is_signed) {
+    static char lookup[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                tmpbuf[65] = {0};
+    int len = 1;
 
-// print number in base 10
-// TODO: support arbitrary bases
-static void putint(int n)
-{
-    static char tmpb[21] = { 0 };
-    char* tmp = &tmpb[0];
-    for (; n; n /= 10)
-        *++tmp = (n % 10) + '0';
-    while (*tmp)
-        putch(*tmp--);
+    // add a minus sign if required
+    if ((int64_t)num < 0 && is_signed) {
+        putch('-');
+        num = -num;
+    }
+
+    // extract characters in temp buffer
+    do {
+        tmpbuf[len++] = lookup[num % base];
+        num /= base;
+    } while(num);
+
+    // print characters
+    while(--len)
+        putch(tmpbuf[len]);
 }
 
 static void klog_show_helper()
@@ -113,11 +113,12 @@ static void vprintf(const char* s, va_list args)
                 break;
 
             case 'd':
-                putint(va_arg(args, int));
+                putnum((uint64_t)va_arg(args, int), 10, true);
                 break;
 
             case 'x':
-                puthex(va_arg(args, uint64_t));
+                puts("0x");
+                putnum(va_arg(args, uint64_t), 16, false);
                 break;
 
             case 's':
