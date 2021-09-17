@@ -15,7 +15,7 @@ TRAMPOLINEBLOB = sys/smp/trampoline.bin
 
 # toolchain options and flags
 # use x86_64-elf-gcc if present, else use system gcc
-CC = $(if $(shell command -v x86_64-elf-gcc 2> /dev/null), x86_64-elf-gcc, gcc)
+CC = $(if $(shell command -v x86_64-elf-gcc 2> /dev/null), x86_64-elf-gcc, gcc-11)
 LD = $(CC)
 AS = $(CC)
 NASM = nasm
