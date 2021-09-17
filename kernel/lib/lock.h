@@ -19,13 +19,13 @@ typedef volatile struct {
         asm volatile(                                           \
             "pushfq;"                                           \
             "cli;"                                              \
-            "lock bts $0, %[lock];"                             \
+            "lock btsl $0, %[lock];"                             \
             "jnc 2f;"                                           \
             "1:"                                                \
             "pause;"                                            \
-            "bt $0, %[lock];"                                   \
+            "btl $0, %[lock];"                                   \
             "jc 1b;"                                            \
-            "lock bts $0, %[lock];"                             \
+            "lock btsl $0, %[lock];"                             \
             "jc 1b;"                                            \
             "2:"                                                \
             "pop %[flags]"                                      \
@@ -37,7 +37,7 @@ typedef volatile struct {
 #define lock_release(s)                         \
     {                                           \
         asm volatile("push %[flags];"           \
-                     "lock btr $0, %[lock];"    \
+                     "lock btrl $0, %[lock];"    \
                      "popfq;"                   \
                      : [lock] "=m"((s)->lock)   \
                      : [flags] "m"((s)->rflags) \

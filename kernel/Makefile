@@ -14,8 +14,8 @@ KERNELOBJ = kernel.elf
 TRAMPOLINEBLOB = sys/smp/trampoline.bin
 
 # toolchain options and flags
-# use gcc 11 if present, else use 10
-CC = $(if $(shell command -v gcc-11 2> /dev/null), gcc-11, gcc-10)
+# use x86_64-elf-gcc if present, else use system gcc
+CC = $(if $(shell command -v x86_64-elf-gcc 2> /dev/null), x86_64-elf-gcc, gcc)
 LD = $(CC)
 AS = $(CC)
 NASM = nasm

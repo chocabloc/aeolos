@@ -5,7 +5,7 @@ SAF-MAKE = ./thirdparty/saf/saf-make
 QEMUFLAGS =	-m 128 \
 			-no-reboot \
 			-no-shutdown \
-			-enable-kvm \
+			-accel kvm:tcg \
 			-cpu qemu64,+avx,+invtsc \
 			-smp 4
 
