@@ -28,7 +28,7 @@ const smp_info_t* smp_get_info()
 
 cpu_t* smp_get_current_info()
 {
-    return (cpu_t*)rdmsr(MSR_GS_BASE);
+    return (cpu_t*)rdmsr(MSR_KERNEL_GS_BASE);
 }
 
 static void init_tss(cpu_t* cpuinfo)
@@ -50,8 +50,8 @@ _Noreturn void smp_ap_entrypoint(cpu_t* cpuinfo)
     gdt_init();
     init_tss(cpuinfo);
 
-    // put cpu information in gs
-    wrmsr(MSR_GS_BASE, (uint64_t)cpuinfo);
+    // put cpu information in gs_base
+    wrmsr(MSR_KERNEL_GS_BASE, (uint64_t)cpuinfo);
 
     // enable the apic
     apic_enable();
@@ -111,7 +111,7 @@ void smp_init()
         if (apic_read_reg(APIC_REG_ID) == lapics[i]->apic_id) {
             klog_info("core %d is BSP\n", lapics[i]->proc_id);
             info.cpus[info.num_cpus].is_bsp = true;
-            wrmsr(MSR_GS_BASE, (uint64_t)&info.cpus[info.num_cpus]);
+            wrmsr(MSR_KERNEL_GS_BASE, (uint64_t)&info.cpus[info.num_cpus]);
             init_tss(&info.cpus[info.num_cpus]);
             info.num_cpus++;
             continue;

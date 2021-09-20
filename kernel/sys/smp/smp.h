@@ -33,10 +33,10 @@ typedef struct [[gnu::packed]] {
 } tss_t;
 
 typedef struct {
+    tss_t tss;
     uint16_t cpu_id;
     uint16_t lapic_id;
     bool is_bsp;
-    tss_t tss;
 } cpu_t;
 
 // smp information structure

@@ -31,7 +31,7 @@ void apic_timer_start()
 
 void apic_timer_set_handler(void (*h)(void*))
 {
-    idt_set_handler(vector, h);
+    idt_set_handler(vector, h, false);
 }
 
 void apic_timer_set_frequency(uint64_t freq)
@@ -54,7 +54,7 @@ void apic_timer_set_mode(apic_timer_mode_t mode)
 {
     uint32_t val = apic_read_reg(APIC_REG_TIMER_LVT);
 
-    if(mode == APIC_TIMER_MODE_PERIODIC)
+    if (mode == APIC_TIMER_MODE_PERIODIC)
         apic_write_reg(APIC_REG_TIMER_LVT, val | APIC_TIMER_FLAG_PERIODIC);
     else
         apic_write_reg(APIC_REG_TIMER_LVT, val & ~(APIC_TIMER_FLAG_PERIODIC));
@@ -71,7 +71,7 @@ void apic_timer_init()
 {
     // allocate a vector for the timer
     vector = idt_get_vector();
-    idt_set_handler(vector, &apic_timer_handler);
+    idt_set_handler(vector, &apic_timer_handler, false);
 
     // unmask the apic timer interrupt and set divisor to 4
     apic_write_reg(APIC_REG_TIMER_LVT, APIC_TIMER_FLAG_MASKED | vector);

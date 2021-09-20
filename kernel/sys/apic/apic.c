@@ -47,7 +47,7 @@ void apic_init()
     vmm_map(NULL, (uint64_t)lapic_base, VIRT_TO_PHYS(lapic_base), 1, VMM_FLAGS_MMIO);
 
     // initialize the spurious interrupt register
-    idt_set_handler(APIC_SPURIOUS_VECTOR_NUM, spurious_int_handler);
+    idt_set_handler(APIC_SPURIOUS_VECTOR_NUM, spurious_int_handler, false);
     apic_enable();
 
     // initialize the apic timer

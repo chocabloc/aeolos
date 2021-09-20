@@ -25,15 +25,13 @@ _Noreturn void kinit(tid_t tid)
     (void)tid;
     klog_show();
     klog_ok("first kernel task started\n");
-    //for (int i = 0; ; i++)
-    //	klog_printf("%d\n", i);
 
     initrd_init((stv2_struct_tag_modules*)stv2_find_struct_tag(bootinfo, STV2_STRUCT_TAG_MODULES_ID));
 
     klog_printf("\n");
-    char buff[4096];
+    char buff[4096] = { 0 };
     vfs_handle_t fh = vfs_open("/docs/test.txt", VFS_MODE_READ);
-    klog_info("reading \"/docs/text.txt\":\n\n");
+    klog_info("reading \"/docs/test.txt\":\n\n");
     vfs_read(fh, 4096, buff);
     klog_printf("%s\n", buff);
     vfs_close(fh);

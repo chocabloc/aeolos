@@ -5,7 +5,9 @@ SAF-MAKE = ./thirdparty/saf/saf-make
 QEMUFLAGS =	-m 128 \
 			-no-reboot \
 			-no-shutdown \
-			-accel kvm:hax:tcg
+			-smp 4 \
+			-cpu host \
+			-M accel=kvm:tcg
 
 KERNELDIR = kernel
 KERNELFILE = kernel/kernel.elf

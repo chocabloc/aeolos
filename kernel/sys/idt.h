@@ -1,10 +1,12 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #define CODE_SEGMENT_SELECTOR 0x08
 
 #define IDT_FLAGS_DEFAULT 0b1000111000000000
+#define IDT_FLAGS_USER 0b1110111000000000
 
 struct [[gnu::packed]] idt_entry {
     uint16_t offset_15_0;
@@ -21,5 +23,5 @@ struct [[gnu::packed]] idtr {
 };
 
 void idt_init();
-void idt_set_handler(uint8_t vector, void* handler);
+void idt_set_handler(uint8_t vector, void* handler, bool usermode);
 uint8_t idt_get_vector();

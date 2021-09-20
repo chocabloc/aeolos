@@ -23,10 +23,6 @@ init_context_switch:
     mov %rsp, %rdi
     call _do_context_switch
 
-    // context switch failed for whatever reason, clean up and return
-    add $120, %rsp
-    iretq
-
 finish_context_switch:
     mov (%rdi), %rsp
 
