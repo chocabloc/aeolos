@@ -1,8 +1,8 @@
 #include "sched.h"
+#include "atomic.h"
 #include "kmalloc.h"
 #include "lib/klog.h"
 #include "lib/time.h"
-#include "lock.h"
 #include "sys/apic/apic.h"
 #include "sys/apic/timer.h"
 #include "sys/hpet.h"
@@ -12,6 +12,9 @@
 #define TIMESLICE_DEFAULT MILLIS_TO_NANOS(1)
 
 static lock_t sched_lock;
+
+// tasks arranged by tid for fast access
+vec_new_static(task_t*, tasks_by_tid);
 
 // an idle task for each cpu
 static task_t* tasks_idle[CPU_MAX];
@@ -34,6 +37,7 @@ static tqueue_t tasks_dead;
 extern void init_context_switch(void* v);
 extern void finish_context_switch(task_t* next);
 
+// idle task run when there's nothing to do
 _Noreturn static void idle(tid_t tid)
 {
     (void)tid;
@@ -75,10 +79,14 @@ static void add_sleeping_sorted(task_t* t)
     }
 }
 
+// adds task to respective list
 static void add_task(task_t* t)
 {
     if (t->status == TASK_SLEEPING) {
         add_sleeping_sorted(t);
+        return;
+    } else if (t->status == TASK_DEAD) {
+        tq_push_front(&tasks_dead, t);
         return;
     }
 
@@ -98,6 +106,7 @@ static void add_task(task_t* t)
     }
 }
 
+// perform a context switch
 void _do_context_switch(task_state_t* state)
 {
     static uint64_t ticks = 0;
@@ -166,8 +175,9 @@ chosen : {
     // set the rsp0 in tss
     smp_get_current_info()->tss.rsp0 = (uint64_t)(next->kstack_limit + KSTACK_SIZE);
     ticks++;
-    apic_send_eoi();
     lock_release(&sched_lock);
+    apic_send_eoi();
+    apic_timer_set_period(TIMESLICE_DEFAULT);
     finish_context_switch(next);
 }
 }
@@ -188,30 +198,51 @@ void sched_sleep(timeval_t nanos)
     asm volatile("hlt");
 }
 
-void sched_die()
+// kill task with specified tid
+int64_t sched_kill(tid_t tid)
 {
     lock_wait(&sched_lock);
-    task_t* curr = tasks_running[smp_get_current_info()->cpu_id];
-    curr->status = TASK_DEAD;
-    tq_push_front(&tasks_dead, curr);
+
+    // check if tid is valid
+    if (tid >= tasks_by_tid.len || tasks_by_tid.data[tid] == NULL) {
+        klog_err("there's no task with tid %d\n", tid);
+        lock_release(&sched_lock);
+        return -1;
+    }
+
+    // mark the task as dead, it will be cleaned up later
+    task_t* t = tasks_by_tid.data[tid];
+    t->status = TASK_DEAD;
+    tasks_by_tid.data[tid] = NULL;
+
+    // was it the currently running task?
+    bool is_current = (t == tasks_running[smp_get_current_info()->cpu_id]);
+
     lock_release(&sched_lock);
 
-    // wait for scheduler
-    asm volatile("hlt");
+    // we can't return if it was the current one
+    if (is_current)
+        asm volatile("hlt");
+    return 0;
 }
 
+// adds a task to the scheduler
 void sched_add(task_t* t)
 {
     lock_wait(&sched_lock);
     add_task(t);
+    vec_resize(&tasks_by_tid, t->tid + 1);
+    tasks_by_tid.data[t->tid] = t;
     lock_release(&sched_lock);
 }
 
+// get pointer to currently running task on the current cpu
 task_t* sched_get_current()
 {
     return tasks_running[smp_get_current_info()->cpu_id];
 }
 
+// initialize the scheduler
 void sched_init(void (*entry)(tid_t))
 {
     uint16_t cpu_id = smp_get_current_info()->cpu_id;
@@ -225,7 +256,7 @@ void sched_init(void (*entry)(tid_t))
     }
 
     apic_timer_set_period(TIMESLICE_DEFAULT);
-    apic_timer_set_mode(APIC_TIMER_MODE_PERIODIC);
+    apic_timer_set_mode(APIC_TIMER_MODE_ONESHOT);
     apic_timer_set_handler(init_context_switch);
     apic_timer_start();
 }

@@ -20,7 +20,7 @@
 static stivale2_struct* bootinfo;
 
 // first task to be executed
-_Noreturn void kinit(tid_t tid)
+void kinit(tid_t tid)
 {
     (void)tid;
     klog_show();
@@ -38,9 +38,9 @@ _Noreturn void kinit(tid_t tid)
 
     vfs_debug();
     pmm_dumpstats();
-    kernel_panic("This OS is a work in progress\n");
-    while (true)
-        ;
+
+    klog_warn("This OS is a work in progress. The computer will now halt.");
+    sched_kill(tid);
 }
 
 _Noreturn void kmain(stivale2_struct* info)

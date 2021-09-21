@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lock.h"
+#include "atomic.h"
 #include "proc/sched/sched.h"
 #include "vfs.h"
 

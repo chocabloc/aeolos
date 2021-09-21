@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lock.h"
+#include "atomic.h"
 #include <stdint.h>
 
 #define MEM_VIRT_OFFSET 0xffff800000000000

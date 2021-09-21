@@ -1,7 +1,7 @@
 #include "klog.h"
+#include "atomic.h"
 #include "dev/serial/serial.h"
 #include "dev/term/term.h"
-#include "lock.h"
 #include "proc/sched/sched.h"
 #include "proc/task.h"
 #include "sys/hpet.h"
@@ -36,9 +36,10 @@ static void puts(const char* s)
 }
 
 // print number in arbitrary base
-static void putnum(uint64_t num, int base, bool is_signed) {
+static void putnum(uint64_t num, int base, bool is_signed)
+{
     static char lookup[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-                tmpbuf[65] = {0};
+                tmpbuf[65] = { 0 };
     int len = 1;
 
     // add a minus sign if required
@@ -51,10 +52,10 @@ static void putnum(uint64_t num, int base, bool is_signed) {
     do {
         tmpbuf[len++] = lookup[num % base];
         num /= base;
-    } while(num);
+    } while (num);
 
     // print characters
-    while(--len)
+    while (--len)
         putch(tmpbuf[len]);
 }
 

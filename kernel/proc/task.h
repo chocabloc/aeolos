@@ -14,8 +14,8 @@
 
 #define KSTACK_SIZE 4096
 
-typedef uint16_t tid_t;
-#define TID_MAX UINT16_MAX
+typedef size_t tid_t;
+#define TID_MAX 65536
 
 typedef uint8_t priority_t;
 #define PRIORITY_IDLE 0
@@ -33,6 +33,7 @@ typedef enum {
     TASK_READY,
     TASK_RUNNING,
     TASK_SLEEPING,
+    TASK_BLOCKED,
     TASK_DEAD
 } tstatus_t;
 

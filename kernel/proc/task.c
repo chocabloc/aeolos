@@ -1,4 +1,5 @@
 #include "task.h"
+#include "atomic.h"
 #include "kmalloc.h"
 #include "sched/sched.h"
 #include "sys/cpu/cpu.h"
@@ -7,11 +8,14 @@
 // highest used tid
 static tid_t curr_tid = 0;
 
+// allocate memory for and initialize a task
 task_t* task_make(void (*entry)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap)
 {
-    // could not allocate a tid
-    if (curr_tid == TID_MAX) {
-        klog_warn("could not allocate tid\n");
+    // try to allocate a tid
+    tid_t ntask_tid = atomic_fetch_inc(&curr_tid);
+    if (ntask_tid > TID_MAX) {
+        ntask_tid = TID_MAX;
+        klog_err("could not allocate tid\n");
         return NULL;
     }
 
@@ -32,7 +36,7 @@ task_t* task_make(void (*entry)(tid_t), priority_t priority, tmode_t mode, void*
     ntask_state->rflags = RFLAGS_DEFAULT;
     ntask_state->rip = (uint64_t)entry;
     ntask_state->rsp = rsp ? (uint64_t)rsp : (uint64_t)ntask->kstack_top;
-    ntask_state->rdi = curr_tid; // pass the tid to the task
+    ntask_state->rdi = ntask_tid; // pass the tid to the task
 
     // initialize the task
     if (pagemap)
@@ -41,17 +45,17 @@ task_t* task_make(void (*entry)(tid_t), priority_t priority, tmode_t mode, void*
         read_cr("cr3", &(ntask->cr3));
 
     ntask->kstack_top = ntask_state;
-    ntask->tid = curr_tid;
+    ntask->tid = ntask_tid;
     ntask->priority = priority;
     ntask->last_tick = 0;
     ntask->status = TASK_READY;
     ntask->wakeuptime = 0;
     vec_init(ntask->openfiles);
 
-    curr_tid++;
     return ntask;
 }
 
+// create a new task and add it to the scheduler
 int task_add(void (*entry)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap)
 {
     task_t* t = task_make(entry, priority, mode, rsp, pagemap);

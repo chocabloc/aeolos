@@ -1,9 +1,9 @@
 #include "vfs.h"
+#include "atomic.h"
 #include "common.h"
 #include "fs/ramfs/ramfs.h"
 #include "klog.h"
 #include "kmalloc.h"
-#include "lock.h"
 #include "memutils.h"
 #include "vector.h"
 

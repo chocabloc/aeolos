@@ -1,7 +1,7 @@
 #include "panic.h"
 #include "apic/timer.h"
+#include "atomic.h"
 #include "klog.h"
-#include "lock.h"
 #include "mm/mm.h"
 #include "symbols.h"
 #include "sys/pit.h"
