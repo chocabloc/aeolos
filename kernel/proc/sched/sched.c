@@ -81,27 +81,26 @@ void _do_context_switch(task_state_t* state)
     // save state of current task
     task_t* curr = tasks_running[cpu];
     curr->kstack_top = state;
-    if (curr->status == TASK_RUNNING)
-        curr->status = TASK_READY;
+    curr->status &= ~TASK_RUNNING;
 
     // wake up tasks which need to be woken up
     while (tasks_asleep.back && tasks_asleep.back->wakeuptime < hpet_get_nanos()) {
         task_t* t = tq_pop_back(&tasks_asleep);
-        t->is_sleeping = false;
+        t->status &= ~TASK_ASLEEP;
     }
 
     // choose next task
     task_t* next = NULL;
     for (tid_t i = curr->tid + 1; i < tasks_all.len; i++) {
         task_t* t = tasks_all.data[i];
-        if (t != NULL && t->status == TASK_READY && !(t->is_sleeping)) {
+        if (t != NULL && t->status == TASK_READY) {
             next = t;
             goto task_chosen;
         }
     }
     for (tid_t i = 0; i <= curr->tid; i++) {
         task_t* t = tasks_all.data[i];
-        if (t != NULL && t->status == TASK_READY && !(t->is_sleeping)) {
+        if (t != NULL && t->status == TASK_READY) {
             next = t;
             goto task_chosen;
         }
@@ -113,14 +112,17 @@ task_chosen:
         next = tasks_idle[cpu];
 
     // we've chosen next task
-    next->status = TASK_RUNNING;
+    next->status |= TASK_RUNNING;
     tasks_running[cpu] = next;
 
     // set rsp0 in the tss
     smp_get_current_info()->tss.rsp0 = (uint64_t)(next->kstack_limit + KSTACK_SIZE);
-    lock_release(&sched_lock);
-    apic_send_eoi();
     apic_timer_set_period(TIMESLICE_DEFAULT);
+    apic_send_eoi();
+
+    // release sched_lock and switch to next task
+    // TODO: possible stack-related race condition?
+    lock_release(&sched_lock);
     finish_context_switch(next);
 }
 
@@ -136,7 +138,7 @@ void sched_sleep(timeval_t nanos)
 
     task_t* curr = tasks_running[smp_get_current_info()->cpu_id];
     curr->wakeuptime = hpet_get_nanos() + nanos;
-    curr->is_sleeping = true;
+    curr->status |= TASK_ASLEEP;
     add_sleeping_sorted(curr);
 
     lock_release(&sched_lock);
@@ -157,14 +159,14 @@ int64_t sched_kill(tid_t tid)
 
     // mark the task as dead, it will be cleaned up later
     task_t* t = tasks_all.data[tid];
-    t->status = TASK_DEAD;
+    t->status |= TASK_DEAD;
     tasks_all.data[tid] = NULL;
     tq_push_front(&tasks_dead, t);
 
     // if it was sleeping, remove it from the sleeping list
-    if (t->is_sleeping) {
+    if (t->status & TASK_ASLEEP) {
         tq_remove(t, &tasks_asleep);
-        t->is_sleeping = false;
+        t->status &= ~TASK_ASLEEP;
     }
 
     // was it the currently running task?
@@ -192,12 +194,12 @@ int64_t sched_block(tid_t tid)
 
     // mark the task as blocked
     task_t* t = tasks_all.data[tid];
-    if (t->status == TASK_BLOCKED) {
+    if (t->status & TASK_BLOCKED) {
         klog_err("task %d is already blocked\n", tid);
         lock_release(&sched_lock);
         return -1;
     }
-    t->status = TASK_BLOCKED;
+    t->status |= TASK_BLOCKED;
 
     // was it the currently running task?
     bool is_current = (t == tasks_running[smp_get_current_info()->cpu_id]);
@@ -224,13 +226,14 @@ int64_t sched_unblock(tid_t tid)
 
     // mark the task as ready
     task_t* t = tasks_all.data[tid];
-    if (t->status != TASK_BLOCKED) {
+    if (!(t->status & TASK_BLOCKED)) {
         klog_err("task %d is already unblocked\n", tid);
         lock_release(&sched_lock);
         return -1;
     }
-    t->status = TASK_READY;
+    t->status &= ~TASK_BLOCKED;
 
+    lock_release(&sched_lock);
     return 0;
 }
 

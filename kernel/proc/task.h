@@ -30,11 +30,12 @@ typedef enum {
 } tmode_t;
 
 typedef enum {
-    TASK_READY,
-    TASK_RUNNING,
-    TASK_BLOCKED,
-    TASK_DEAD
+    TASK_RUNNING = 1 << 0,
+    TASK_BLOCKED = 1 << 1,
+    TASK_ASLEEP = 1 << 2,
+    TASK_DEAD = 1 << 3
 } tstatus_t;
+#define TASK_READY 0
 
 typedef struct {
     uint64_t r15;
@@ -66,7 +67,6 @@ typedef struct task_t {
     tid_t tid; // task id
     priority_t priority; // task priority
     tstatus_t status; // current status of task
-    bool is_sleeping; // is the task in sleep
     timeval_t wakeuptime; // time at which task should wake up
     tmode_t mode; // kernel mode or usermode
     void* kstack_limit; // kernel stack limit
