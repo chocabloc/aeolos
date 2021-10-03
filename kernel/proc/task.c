@@ -47,7 +47,6 @@ task_t* task_make(void (*entry)(tid_t), priority_t priority, tmode_t mode, void*
     ntask->kstack_top = ntask_state;
     ntask->tid = ntask_tid;
     ntask->priority = priority;
-    ntask->last_tick = 0;
     ntask->status = TASK_READY;
     ntask->wakeuptime = 0;
     vec_init(ntask->openfiles);
@@ -56,7 +55,7 @@ task_t* task_make(void (*entry)(tid_t), priority_t priority, tmode_t mode, void*
 }
 
 // create a new task and add it to the scheduler
-int task_add(void (*entry)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap)
+tid_t task_add(void (*entry)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap)
 {
     task_t* t = task_make(entry, priority, mode, rsp, pagemap);
     if (t) {

@@ -32,7 +32,6 @@ typedef enum {
 typedef enum {
     TASK_READY,
     TASK_RUNNING,
-    TASK_SLEEPING,
     TASK_BLOCKED,
     TASK_DEAD
 } tstatus_t;
@@ -66,8 +65,8 @@ typedef struct task_t {
 
     tid_t tid; // task id
     priority_t priority; // task priority
-    uint64_t last_tick; // last tick at which task ran
     tstatus_t status; // current status of task
+    bool is_sleeping; // is the task in sleep
     timeval_t wakeuptime; // time at which task should wake up
     tmode_t mode; // kernel mode or usermode
     void* kstack_limit; // kernel stack limit
@@ -78,4 +77,4 @@ typedef struct task_t {
 } task_t;
 
 task_t* task_make(void (*entrypoint)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap);
-int task_add(void (*entry)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap);
+tid_t task_add(void (*entry)(tid_t), priority_t priority, tmode_t mode, void* rsp, uint64_t pagemap);

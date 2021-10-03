@@ -8,6 +8,7 @@
 *.sys
 *.EFI
 *.gen
+*.bak
 *.saf.gz
 .vscode/*
 .vscode

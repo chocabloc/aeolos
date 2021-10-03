@@ -1,38 +1,30 @@
 #include "sched.h"
+#include "../task.h"
 #include "atomic.h"
-#include "kmalloc.h"
-#include "lib/klog.h"
 #include "lib/time.h"
 #include "sys/apic/apic.h"
 #include "sys/apic/timer.h"
 #include "sys/hpet.h"
 #include "sys/smp/smp.h"
 #include "tqueue.h"
+#include "vector.h"
 
-#define TIMESLICE_DEFAULT MILLIS_TO_NANOS(1)
+#define TIMESLICE_DEFAULT MILLIS_TO_NANOS(2)
+#define IS_TID_VALID(tid) ((tid) < tasks_all.len && tasks_all.data[(tid)] != NULL)
 
 static lock_t sched_lock;
-
-// tasks arranged by tid for fast access
-vec_new_static(task_t*, tasks_by_tid);
 
 // an idle task for each cpu
 static task_t* tasks_idle[CPU_MAX];
 
-// currently running task
+// currently running tasks on each cpu
 static task_t* tasks_running[CPU_MAX];
 
-// tasks grouped by priority
-static tqueue_t tasks_bg;
-static tqueue_t tasks_min;
-static tqueue_t tasks_mid;
-static tqueue_t tasks_max;
+// list of all tasks
+vec_new_static(task_t*, tasks_all);
 
-// sleeping tasks arranged in descending order of their wakeup time
-static tqueue_t tasks_asleep;
-
-// temporary space to hold dead tasks, before janitor cleans them
-static tqueue_t tasks_dead;
+// asleep and dead tasks respectively
+static tqueue_t tasks_asleep, tasks_dead;
 
 extern void init_context_switch(void* v);
 extern void finish_context_switch(task_t* next);
@@ -54,6 +46,7 @@ _Noreturn static void sched_janitor(tid_t tid)
         lock_wait(&sched_lock);
         task_t* t;
         while ((t = tq_pop_back(&tasks_dead))) {
+            tasks_all.data[t->tid] = NULL;
             kmfree(t->kstack_limit);
             kmfree(t);
         }
@@ -79,109 +72,59 @@ static void add_sleeping_sorted(task_t* t)
     }
 }
 
-// adds task to respective list
-static void add_task(task_t* t)
-{
-    if (t->status == TASK_SLEEPING) {
-        add_sleeping_sorted(t);
-        return;
-    } else if (t->status == TASK_DEAD) {
-        tq_push_front(&tasks_dead, t);
-        return;
-    }
-
-    switch (t->priority) {
-    case PRIORITY_BG:
-        tq_push_front(&tasks_bg, t);
-        return;
-    case PRIORITY_MIN:
-        tq_push_front(&tasks_min, t);
-        return;
-    case PRIORITY_MID:
-        tq_push_front(&tasks_mid, t);
-        return;
-    case PRIORITY_MAX:
-        tq_push_front(&tasks_max, t);
-        return;
-    }
-}
-
 // perform a context switch
 void _do_context_switch(task_state_t* state)
 {
-    static uint64_t ticks = 0;
-
     lock_wait(&sched_lock);
     uint16_t cpu = smp_get_current_info()->cpu_id;
 
-    // save state of current task, if there is one
+    // save state of current task
     task_t* curr = tasks_running[cpu];
-    if (curr) {
-        curr->kstack_top = state;
-        curr->last_tick = ticks;
-
-        // if the task was running, set it to ready
-        if (curr->status == TASK_RUNNING)
-            curr->status = TASK_READY;
-        add_task(curr);
-    }
+    curr->kstack_top = state;
+    if (curr->status == TASK_RUNNING)
+        curr->status = TASK_READY;
 
     // wake up tasks which need to be woken up
     while (tasks_asleep.back && tasks_asleep.back->wakeuptime < hpet_get_nanos()) {
         task_t* t = tq_pop_back(&tasks_asleep);
-        t->status = TASK_READY;
-        add_task(t);
+        t->is_sleeping = false;
     }
 
-    // next task to run
+    // choose next task
     task_t* next = NULL;
-
-    // get tasks from all lists
-    task_t *tmin = tasks_min.back, *tmid = tasks_mid.back, *tmax = tasks_max.back;
-
-    // if nothing to execute, grab a background task
-    if (!tmin && !tmid && !tmax) {
-        task_t* tbg = tasks_bg.back;
-        if (!tbg) {
-            next = tasks_idle[cpu];
-        } else {
-            next = tq_pop_back(&tasks_bg);
+    for (tid_t i = curr->tid + 1; i < tasks_all.len; i++) {
+        task_t* t = tasks_all.data[i];
+        if (t != NULL && t->status == TASK_READY && !(t->is_sleeping)) {
+            next = t;
+            goto task_chosen;
         }
-        goto chosen;
+    }
+    for (tid_t i = 0; i <= curr->tid; i++) {
+        task_t* t = tasks_all.data[i];
+        if (t != NULL && t->status == TASK_READY && !(t->is_sleeping)) {
+            next = t;
+            goto task_chosen;
+        }
     }
 
-    // calculate effective priorities
-    uint64_t tminp = tmin ? (tmin->priority + (ticks - tmin->last_tick)) : 0;
-    uint64_t tmidp = tmid ? (tmid->priority + (ticks - tmid->last_tick)) : 0;
-    uint64_t tmaxp = tmax ? (tmax->priority + (ticks - tmax->last_tick)) : 0;
+task_chosen:
+    // could not find a runnable task, so idle
+    if (!next)
+        next = tasks_idle[cpu];
 
-    // pop task with highest priority
-    if (tminp > tmidp) {
-        if (tminp > tmaxp)
-            next = tq_pop_back(&tasks_min);
-        else
-            next = tq_pop_back(&tasks_max);
-    } else {
-        if (tmidp > tmaxp)
-            next = tq_pop_back(&tasks_mid);
-        else
-            next = tq_pop_back(&tasks_max);
-    }
-
-chosen : {
+    // we've chosen next task
     next->status = TASK_RUNNING;
     tasks_running[cpu] = next;
 
-    // set the rsp0 in tss
+    // set rsp0 in the tss
     smp_get_current_info()->tss.rsp0 = (uint64_t)(next->kstack_limit + KSTACK_SIZE);
-    ticks++;
     lock_release(&sched_lock);
     apic_send_eoi();
     apic_timer_set_period(TIMESLICE_DEFAULT);
     finish_context_switch(next);
 }
-}
 
+// sleep current task for specified number of nanoseconds
 void sched_sleep(timeval_t nanos)
 {
     // if sleep time is too little, busy sleep
@@ -189,11 +132,13 @@ void sched_sleep(timeval_t nanos)
         hpet_nanosleep(nanos);
         return;
     }
-
     lock_wait(&sched_lock);
+
     task_t* curr = tasks_running[smp_get_current_info()->cpu_id];
     curr->wakeuptime = hpet_get_nanos() + nanos;
-    curr->status = TASK_SLEEPING;
+    curr->is_sleeping = true;
+    add_sleeping_sorted(curr);
+
     lock_release(&sched_lock);
     asm volatile("hlt");
 }
@@ -204,16 +149,23 @@ int64_t sched_kill(tid_t tid)
     lock_wait(&sched_lock);
 
     // check if tid is valid
-    if (tid >= tasks_by_tid.len || tasks_by_tid.data[tid] == NULL) {
+    if (!IS_TID_VALID(tid)) {
         klog_err("there's no task with tid %d\n", tid);
         lock_release(&sched_lock);
         return -1;
     }
 
     // mark the task as dead, it will be cleaned up later
-    task_t* t = tasks_by_tid.data[tid];
+    task_t* t = tasks_all.data[tid];
     t->status = TASK_DEAD;
-    tasks_by_tid.data[tid] = NULL;
+    tasks_all.data[tid] = NULL;
+    tq_push_front(&tasks_dead, t);
+
+    // if it was sleeping, remove it from the sleeping list
+    if (t->is_sleeping) {
+        tq_remove(t, &tasks_asleep);
+        t->is_sleeping = false;
+    }
 
     // was it the currently running task?
     bool is_current = (t == tasks_running[smp_get_current_info()->cpu_id]);
@@ -226,35 +178,100 @@ int64_t sched_kill(tid_t tid)
     return 0;
 }
 
+// block specified task indefinitely
+int64_t sched_block(tid_t tid)
+{
+    lock_wait(&sched_lock);
+
+    // check if tid is valid
+    if (!IS_TID_VALID(tid)) {
+        klog_err("there's no task with tid %d\n", tid);
+        lock_release(&sched_lock);
+        return -1;
+    }
+
+    // mark the task as blocked
+    task_t* t = tasks_all.data[tid];
+    if (t->status == TASK_BLOCKED) {
+        klog_err("task %d is already blocked\n", tid);
+        lock_release(&sched_lock);
+        return -1;
+    }
+    t->status = TASK_BLOCKED;
+
+    // was it the currently running task?
+    bool is_current = (t == tasks_running[smp_get_current_info()->cpu_id]);
+
+    lock_release(&sched_lock);
+
+    // we can't return right now if it was the current one
+    if (is_current)
+        asm volatile("hlt");
+    return 0;
+}
+
+// unblock specified task
+int64_t sched_unblock(tid_t tid)
+{
+    lock_wait(&sched_lock);
+
+    // check if tid is valid
+    if (!IS_TID_VALID(tid)) {
+        klog_err("there's no task with tid %d\n", tid);
+        lock_release(&sched_lock);
+        return -1;
+    }
+
+    // mark the task as ready
+    task_t* t = tasks_all.data[tid];
+    if (t->status != TASK_BLOCKED) {
+        klog_err("task %d is already unblocked\n", tid);
+        lock_release(&sched_lock);
+        return -1;
+    }
+    t->status = TASK_READY;
+
+    return 0;
+}
+
 // adds a task to the scheduler
 void sched_add(task_t* t)
 {
     lock_wait(&sched_lock);
-    add_task(t);
-    vec_resize(&tasks_by_tid, t->tid + 1);
-    tasks_by_tid.data[t->tid] = t;
+    vec_resize(&tasks_all, t->tid + 1);
+    tasks_all.data[t->tid] = t;
     lock_release(&sched_lock);
 }
 
-// get pointer to currently running task on the current cpu
+// get currently running task data
 task_t* sched_get_current()
 {
     return tasks_running[smp_get_current_info()->cpu_id];
 }
 
 // initialize the scheduler
-void sched_init(void (*entry)(tid_t))
+void sched_init(void (*first_task)(tid_t))
 {
     uint16_t cpu_id = smp_get_current_info()->cpu_id;
-    tasks_idle[cpu_id] = task_make(idle, PRIORITY_IDLE, TASK_KERNEL_MODE, NULL, 0);
 
-    // scheduler has been started on the bsp
-    if (entry) {
-        task_add(entry, PRIORITY_MID, TASK_KERNEL_MODE, NULL, 0);
+    /*
+        create idle task for current core and set it to running
+        idle tasks are removed from task list to prevent the
+        scheduler from attempting to schedule them
+    */
+    tid_t tid_idle = task_add(idle, 0, TASK_KERNEL_MODE, NULL, 0);
+    tasks_idle[cpu_id] = tasks_all.data[tid_idle];
+    tasks_running[cpu_id] = tasks_all.data[tid_idle];
+    tasks_all.data[tid_idle] = NULL;
+
+    // scheduler has been started on the bsp, do some initialization
+    if (first_task) {
+        task_add(first_task, PRIORITY_MID, TASK_KERNEL_MODE, NULL, 0);
         task_add(sched_janitor, PRIORITY_MIN, TASK_KERNEL_MODE, NULL, 0);
         klog_ok("started on bsp\n");
     }
 
+    // configure and start the lapic timer
     apic_timer_set_period(TIMESLICE_DEFAULT);
     apic_timer_set_mode(APIC_TIMER_MODE_ONESHOT);
     apic_timer_set_handler(init_context_switch);

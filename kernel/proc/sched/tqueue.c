@@ -30,6 +30,22 @@ void tq_insert_after(tqueue_t* q, task_t* a, task_t* t)
     }
 }
 
+void tq_remove(task_t* t, tqueue_t* q)
+{
+    if (t->prev && t->next) {
+        t->prev->next = t->next;
+        t->next->prev = t->prev;
+    } else if (t->prev) {
+        t->prev->next = NULL;
+        q->back = t->prev;
+    } else if (t->next) {
+        t->next->prev = NULL;
+        q->front = t->next;
+    }
+    t->next = NULL;
+    t->prev = NULL;
+}
+
 task_t* tq_pop_back(tqueue_t* q)
 {
     if (!q->back)
