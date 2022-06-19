@@ -32,8 +32,9 @@ void kinit(tid_t tid)
     char buff[4096] = { 0 };
     vfs_handle_t fh = vfs_open("/docs/test.txt", VFS_MODE_READ);
     klog_info("reading \"/docs/test.txt\":\n\n");
-    vfs_read(fh, 4096, buff);
-    klog_printf("%s\n", buff);
+    int64_t nb = vfs_read(fh, 4096, buff);
+    klog_printf("%s\n", buff, nb);
+    klog_info("bytes read: %d\n", nb);
     vfs_close(fh);
 
     vfs_debug();

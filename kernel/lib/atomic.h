@@ -18,8 +18,7 @@ typedef volatile struct {
 
 // simple spinlocks
 #define lock_wait(s)                                            \
-    {                                                           \
-        asm volatile(                                           \
+        __asm__ volatile(                                       \
             "pushfq;"                                           \
             "cli;"                                              \
             "lock btsl $0, %[lock];"                            \
@@ -34,17 +33,16 @@ typedef volatile struct {
             "pop %[flags]"                                      \
             : [lock] "=m"((s)->lock), [flags] "=m"((s)->rflags) \
             :                                                   \
-            : "memory", "cc");                                  \
-    }
+            : "memory", "cc")
+
 #define lock_release(s)                         \
-    {                                           \
-        asm volatile("push %[flags];"           \
+        __asm__ volatile("push %[flags];"       \
                      "lock btrl $0, %[lock];"   \
                      "popfq;"                   \
                      : [lock] "=m"((s)->lock)   \
                      : [flags] "m"((s)->rflags) \
-                     : "memory", "cc");         \
-    }
+                     : "memory", "cc")
+
 #define lock_try(s) __sync_bool_compare_and_swap(&((s)->lock), 0, 1)
 
 // atomic fetch and increment

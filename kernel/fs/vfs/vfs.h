@@ -1,9 +1,9 @@
 #pragma once
 
+#include "lib/vector.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "lib/vector.h"
 
 // some limits
 #define VFS_MAX_PATH_LEN 4096
@@ -19,7 +19,6 @@ typedef struct _vfs_tnode_t vfs_tnode_t;
 typedef enum {
     VFS_NODE_FILE,
     VFS_NODE_FOLDER,
-    VFS_NODE_LINK,
     VFS_NODE_PIPE,
     VFS_NODE_BLOCK_DEVICE,
     VFS_NODE_CHAR_DEVICE,
@@ -37,11 +36,14 @@ typedef struct vfs_fsinfo_t {
     char name[16]; // name of the fs
     bool istemp; // is it a temporary filesystem
 
-    // fs-specific functions
     vfs_inode_t* (*mount)(vfs_inode_t* device);
     int64_t (*mknode)(vfs_tnode_t* this);
+
+    // return value is number of bytes read/written
     int64_t (*read)(vfs_inode_t* this, size_t offset, size_t len, void* buff);
     int64_t (*write)(vfs_inode_t* this, size_t offset, size_t len, const void* buff);
+
+    // return value is -1 on error, 0 on success
     int64_t (*sync)(vfs_inode_t* this);
     int64_t (*refresh)(vfs_inode_t* this);
     int64_t (*setlink)(vfs_tnode_t* this, vfs_inode_t* target);

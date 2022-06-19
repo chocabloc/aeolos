@@ -33,14 +33,14 @@ int64_t ramfs_read(vfs_inode_t* this, size_t offset, size_t len, void* buff)
 {
     ramfs_ident_t* id = (ramfs_ident_t*)this->ident;
     memcpy(((uint8_t*)id->data) + offset, buff, len);
-    return 0;
+    return len;
 }
 
 int64_t ramfs_write(vfs_inode_t* this, size_t offset, size_t len, const void* buff)
 {
     ramfs_ident_t* id = (ramfs_ident_t*)this->ident;
     memcpy(buff, ((uint8_t*)id->data) + offset, len);
-    return 0;
+    return len;
 }
 
 // synchronizes file size (and other metadata)

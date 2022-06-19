@@ -4,6 +4,9 @@
 
 #include "common.h"
 
+// only block devices and files have a fixed size
+#define HAS_SIZE(n) ((n)->type == VFS_NODE_BLOCK_DEVICE || (n)->type == VFS_NODE_FILE)
+
 // read specified number of bytes from a file
 int64_t vfs_read(vfs_handle_t handle, size_t len, void* buff)
 {
@@ -14,17 +17,16 @@ int64_t vfs_read(vfs_handle_t handle, size_t len, void* buff)
     lock_wait(&vfs_lock);
     vfs_inode_t* inode = fd->inode;
 
-    // truncate if asking for more data than available
-    if (fd->seek_pos + len > inode->size) {
+    // truncate if asking for more data than available,
+    // and the file has a size (i.e. not a pipe or char device)
+    if (fd->seek_pos + len > inode->size && HAS_SIZE(inode)) {
         len = inode->size - fd->seek_pos;
         if (len == 0)
             goto end;
     }
 
-    int64_t status = fd->inode->fs->read(fd->inode, fd->seek_pos, len, buff);
-    if (status == -1)
-        len = 0;
-    fd->seek_pos += len;
+    int64_t len_read = fd->inode->fs->read(fd->inode, fd->seek_pos, len, buff);
+    fd->seek_pos += len_read;
 
 end:
     lock_release(&vfs_lock);
@@ -47,16 +49,15 @@ int64_t vfs_write(vfs_handle_t handle, size_t len, const void* buff)
     lock_wait(&vfs_lock);
     vfs_inode_t* inode = fd->inode;
 
-    // expand file if writing more data than its size
-    if (fd->seek_pos + len > inode->size) {
+    // expand file if writing more data than its size,
+    // and the file has a size (i.e. not a pipe or char device)
+    if (fd->seek_pos + len > inode->size && HAS_SIZE(inode)) {
         inode->size = fd->seek_pos + len;
         inode->fs->sync(inode);
     }
 
-    int64_t status = inode->fs->write(inode, fd->seek_pos, len, buff);
-    if (status == -1)
-        len = 0;
-    fd->seek_pos += len;
+    int64_t len_written = inode->fs->write(inode, fd->seek_pos, len, buff);
+    fd->seek_pos += len_written;
 
     lock_release(&vfs_lock);
     return (int64_t)len;
